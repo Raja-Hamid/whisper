@@ -62,6 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: Form(
             key: _formKey,
             child: ListView(
+              physics: const BouncingScrollPhysics(),
               children: [
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -213,14 +214,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     Expanded(
                       child: Divider(
-                        color:
-                            CustomColors.grey.withAlpha((0.5 * 255).round()),
+                        color: CustomColors.grey.withAlpha((0.5 * 255).round()),
                         thickness: 1.h,
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 0.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 0.h),
                       child: Text(
                         'Sign up with',
                         style: TextStyle(
@@ -232,8 +232,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     Expanded(
                       child: Divider(
-                        color:
-                            CustomColors.grey.withAlpha((0.5 * 255).round()),
+                        color: CustomColors.grey.withAlpha((0.5 * 255).round()),
                         thickness: 1.h,
                       ),
                     ),
