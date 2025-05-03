@@ -74,10 +74,17 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
             padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
             child: Column(
               children: [
-                SearchBar(
-                  hintText: 'Search for users',
-                  leading: const Icon(Icons.search),
-                  backgroundColor: WidgetStatePropertyAll(CustomColors.white),
+                SearchAnchor.bar(
+                  barPadding: WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(horizontal: 15.w),
+                  ),
+                  barHintText: 'Search for users',
+                  barLeading: const Icon(Icons.search),
+                  barBackgroundColor:
+                      WidgetStatePropertyAll(CustomColors.white),
+                  suggestionsBuilder: (context, controller) {
+                    return [];
+                  },
                 ),
                 SizedBox(
                   height: 25.h,

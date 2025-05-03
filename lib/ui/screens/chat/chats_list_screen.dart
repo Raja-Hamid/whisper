@@ -71,11 +71,13 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             ),
           ),
           child: Padding(
-            padding:
-            EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
+            padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
             child: Column(
               children: [
                 SearchBar(
+                  padding: WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(horizontal: 15.w),
+                  ),
                   hintText: 'Search',
                   leading: const Icon(Icons.search),
                   backgroundColor: WidgetStatePropertyAll(CustomColors.white),
