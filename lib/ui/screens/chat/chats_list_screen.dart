@@ -75,17 +75,10 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
             child: Column(
               children: [
-                TextField(
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.r),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
+                SearchBar(
+                  hintText: 'Search',
+                  leading: const Icon(Icons.search),
+                  backgroundColor: WidgetStatePropertyAll(CustomColors.white),
                 ),
                 SizedBox(
                   height: 25.h,

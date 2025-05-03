@@ -9,7 +9,22 @@ class AddFriendsScreen extends StatefulWidget {
   State<AddFriendsScreen> createState() => _AddFriendsScreenState();
 }
 
-class _AddFriendsScreenState extends State<AddFriendsScreen> {
+class _AddFriendsScreenState extends State<AddFriendsScreen>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +61,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.white.withAlpha((0.5 * 255).round()),
+                CustomColors.white.withAlpha((0.5 * 255).round()),
               ],
               stops: const [0, 0],
             ),
@@ -59,20 +74,81 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
             padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
             child: Column(
               children: [
-                TextField(
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search for users',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.r),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
+                SearchBar(
+                  hintText: 'Search for users',
+                  leading: const Icon(Icons.search),
+                  backgroundColor: WidgetStatePropertyAll(CustomColors.white),
+                ),
+                SizedBox(
+                  height: 25.h,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: CustomColors.white.withAlpha((0.5 * 255).round()),
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  child: TabBar(
+                    dividerColor: Colors.transparent,
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30.r),
+                        color: Colors.grey),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.grey[700],
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    tabs: [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Received'),
+                            SizedBox(
+                              width: 10.w,
+                            ),
+                            CircleAvatar(
+                              radius: 10.r,
+                              backgroundColor: Colors.white,
+                              child: const Text(
+                                '1',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.green),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Sent'),
+                            SizedBox(
+                              width: 10.w,
+                            ),
+                            CircleAvatar(
+                              radius: 10.r,
+                              backgroundColor: Colors.white,
+                              child: const Text(
+                                '1',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.green),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 25.h,),
-                
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: const [
+                      Center(child: Text('No Requests Received')),
+                      Center(child: Text('No Requests Sent')),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
