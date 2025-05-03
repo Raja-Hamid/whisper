@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:whisper/constants/colors.dart';
+import 'package:whisper/models/user_model.dart';
+import 'package:whisper/ui/widgets/search_tile.dart';
+import 'package:whisper/controllers/user_search_controller.dart';
 
 class AddFriendsScreen extends StatefulWidget {
   const AddFriendsScreen({super.key});
@@ -12,6 +15,8 @@ class AddFriendsScreen extends StatefulWidget {
 class _AddFriendsScreenState extends State<AddFriendsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  final UserSearchController _searchController = UserSearchController();
+  List<UserModel> localSearchResults = [];
 
   @override
   void initState() {
@@ -24,6 +29,14 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
     _tabController.dispose();
     super.dispose();
   }
+
+  Future<void> handleSearch(String query) async {
+    final results = await _searchController.searchUsers(query);
+    setState(() => localSearchResults = results);
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +95,19 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                   barLeading: const Icon(Icons.search),
                   barBackgroundColor:
                       WidgetStatePropertyAll(CustomColors.white),
+                  onChanged: (query) => handleSearch(query),
                   suggestionsBuilder: (context, controller) {
-                    return [];
+                    if (controller.text.isEmpty) {
+                      return [const ListTile(title: Text('Type to search users...'))];
+                    }
+
+                    if (localSearchResults.isEmpty) {
+                      return [const ListTile(title: Text('No User Found'))];
+                    }
+
+                    return localSearchResults
+                        .map((user) => SearchTile(userName: user.userName))
+                        .toList();
                   },
                 ),
                 SizedBox(
