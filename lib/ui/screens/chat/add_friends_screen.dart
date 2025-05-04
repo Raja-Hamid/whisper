@@ -216,7 +216,8 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                           );
                         }
                         return ListView.builder(
-                          padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 5.w),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 15.h, horizontal: 5.w),
                           itemCount:
                               _friendRequestController.receivedRequests.length,
                           itemBuilder: (context, index) {
@@ -296,7 +297,8 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                           );
                         }
                         return ListView.builder(
-                          padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 5.w),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 15.h, horizontal: 5.w),
                           itemCount:
                               _friendRequestController.sentRequests.length,
                           itemBuilder: (context, index) {

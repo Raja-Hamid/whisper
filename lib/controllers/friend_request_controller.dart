@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,17 @@ class FriendRequestController extends GetxController {
   final RxList<FriendRequestModel> sentRequests = <FriendRequestModel>[].obs;
   final RxList<FriendRequestModel> receivedRequests =
       <FriendRequestModel>[].obs;
+
+  late StreamSubscription<QuerySnapshot> _sentRequestSub;
+  late StreamSubscription<QuerySnapshot> _receivedRequestSub;
+  final Map<String, UserModel> _userCache = {};
+
+  @override
+  void onClose() {
+    _sentRequestSub.cancel();
+    _receivedRequestSub.cancel();
+    super.onClose();
+  }
 
   // SEND FRIEND REQUEST
   Future<void> sendRequest(String toUserId) async {
@@ -89,33 +101,31 @@ class FriendRequestController extends GetxController {
   }
 
   // FETCH REQUESTS
-  Future<void> fetchRequests() async {
+  void fetchRequests() {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) return;
 
-    // Fetch sent requests
-    final sentSnapshot = await _firestore
+    // Listen to sent requests
+    _sentRequestSub = _firestore
         .collection('friend_requests')
         .where('from', isEqualTo: currentUserId)
         .where('status', isEqualTo: 'pending')
-        .get();
+        .snapshots()
+        .listen((snapshot) {
+      sentRequests.value =
+          snapshot.docs.map((e) => FriendRequestModel.fromDoc(e)).toList();
+    });
 
-    sentRequests.clear();
-    sentRequests.addAll(
-      sentSnapshot.docs.map((e) => FriendRequestModel.fromDoc(e)),
-    );
-
-    // Fetch received requests
-    final receivedSnapshot = await _firestore
+    // Listen to received requests
+    _receivedRequestSub = _firestore
         .collection('friend_requests')
         .where('to', isEqualTo: currentUserId)
         .where('status', isEqualTo: 'pending')
-        .get();
-
-    receivedRequests.clear();
-    receivedRequests.addAll(
-      receivedSnapshot.docs.map((e) => FriendRequestModel.fromDoc(e)),
-    );
+        .snapshots()
+        .listen((snapshot) {
+      receivedRequests.value =
+          snapshot.docs.map((e) => FriendRequestModel.fromDoc(e)).toList();
+    });
   }
 
   // ACCEPT REQUEST
@@ -124,25 +134,30 @@ class FriendRequestController extends GetxController {
       'status': 'accepted',
     });
 
-    final timestamp = FieldValue.serverTimestamp();
-
     await _firestore
         .collection('users')
         .doc(request.from)
         .collection('friends')
         .doc(request.to)
-        .set({'timestamp': timestamp});
+        .set({'timestamp': FieldValue.serverTimestamp()});
 
     await _firestore
         .collection('users')
         .doc(request.to)
         .collection('friends')
         .doc(request.from)
-        .set({'timestamp': timestamp});
+        .set({'timestamp': FieldValue.serverTimestamp()});
 
-    fetchRequests();
+    final user = await getUserById(request.from);
+    Get.snackbar(
+      'Request Accepted',
+      user != null
+          ? 'You are now friends with ${user.firstName}.'
+          : 'Friend request accepted.',
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
   }
-
 
   // DECLINE REQUEST
   Future<void> declineRequest(FriendRequestModel request) async {
@@ -150,13 +165,20 @@ class FriendRequestController extends GetxController {
         .collection('friend_requests')
         .doc(request.id)
         .update({'status': 'declined'});
-    fetchRequests();
   }
 
   // FETCH USER DATA
   Future<UserModel?> getUserById(String uid) async {
+    if (_userCache.containsKey(uid)) {
+      return _userCache[uid];
+    }
+
     final doc = await _firestore.collection('users').doc(uid).get();
-    if (doc.exists) return UserModel.fromDocument(doc);
+    if (doc.exists) {
+      final user = UserModel.fromDocument(doc);
+      _userCache[uid] = user;
+      return user;
+    }
     return null;
   }
 
@@ -202,8 +224,7 @@ class FriendRequestController extends GetxController {
 
       for (var doc in snapshot.docs) {
         final userId = doc.id;
-        final userDoc =
-        await _firestore.collection('users').doc(userId).get();
+        final userDoc = await _firestore.collection('users').doc(userId).get();
         if (userDoc.exists) {
           users.add(UserModel.fromDocument(userDoc));
         }

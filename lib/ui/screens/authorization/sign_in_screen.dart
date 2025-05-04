@@ -61,6 +61,7 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Form(
             key: _formKey,
             child: ListView(
+              physics: const NeverScrollableScrollPhysics(),
               children: [
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
