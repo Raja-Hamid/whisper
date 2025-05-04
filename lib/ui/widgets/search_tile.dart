@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SearchTile extends StatelessWidget {
   final String userName;
-  const SearchTile({super.key, required this.userName});
+  final Function()? onPressed;
+  const SearchTile(
+      {super.key, required this.userName, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +15,8 @@ class SearchTile extends StatelessWidget {
           radius: 20.r,
         ),
         title: Text(userName),
+        trailing:
+            TextButton(onPressed: onPressed, child: const Text('Add Friend')),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
+import 'package:whisper/controllers/friend_request_controller.dart';
 import 'package:whisper/models/user_model.dart';
 import 'package:whisper/ui/widgets/search_tile.dart';
 import 'package:whisper/controllers/user_search_controller.dart';
@@ -16,12 +18,15 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final UserSearchController _searchController = UserSearchController();
+  final FriendRequestController _friendRequestController =
+      Get.put(FriendRequestController());
   List<UserModel> localSearchResults = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _friendRequestController.fetchRequests();
   }
 
   @override
@@ -34,9 +39,6 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
     final results = await _searchController.searchUsers(query);
     setState(() => localSearchResults = results);
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -98,15 +100,23 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                   onChanged: (query) => handleSearch(query),
                   suggestionsBuilder: (context, controller) {
                     if (controller.text.isEmpty) {
-                      return [const ListTile(title: Text('Type to search users...'))];
+                      return [
+                        const ListTile(title: Text('Type to search users...')),
+                      ];
                     }
 
                     if (localSearchResults.isEmpty) {
-                      return [const ListTile(title: Text('No User Found'))];
+                      return [
+                        const ListTile(title: Text('No User Found')),
+                      ];
                     }
 
                     return localSearchResults
-                        .map((user) => SearchTile(userName: user.userName))
+                        .map((user) => SearchTile(
+                              userName: user.userName,
+                              onPressed: () => _friendRequestController
+                                  .sendRequest(user.uid),
+                            ))
                         .toList();
                   },
                 ),
@@ -122,8 +132,9 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                     dividerColor: Colors.transparent,
                     controller: _tabController,
                     indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30.r),
-                        color: Colors.grey),
+                      borderRadius: BorderRadius.circular(30.r),
+                      color: CustomColors.black.withAlpha((0.4 * 255).round()),
+                    ),
                     labelColor: Colors.white,
                     unselectedLabelColor: Colors.grey[700],
                     indicatorSize: TabBarIndicatorSize.tab,
@@ -136,15 +147,21 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                             SizedBox(
                               width: 10.w,
                             ),
-                            CircleAvatar(
-                              radius: 10.r,
-                              backgroundColor: Colors.white,
-                              child: const Text(
-                                '1',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.green),
-                              ),
-                            ),
+                            Obx(() {
+                              return CircleAvatar(
+                                radius: 10.r,
+                                backgroundColor: Colors.white,
+                                child: Text(
+                                  '${_friendRequestController.receivedRequests.length}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: CustomColors.black.withAlpha(
+                                      (0.4 * 255).round(),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
                           ],
                         ),
                       ),
@@ -156,15 +173,21 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                             SizedBox(
                               width: 10.w,
                             ),
-                            CircleAvatar(
-                              radius: 10.r,
-                              backgroundColor: Colors.white,
-                              child: const Text(
-                                '1',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.green),
-                              ),
-                            ),
+                            Obx(() {
+                              return CircleAvatar(
+                                radius: 10.r,
+                                backgroundColor: Colors.white,
+                                child: Text(
+                                  '${_friendRequestController.sentRequests.length}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: CustomColors.black.withAlpha(
+                                      (0.4 * 255).round(),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
                           ],
                         ),
                       ),
@@ -174,9 +197,150 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: const [
-                      Center(child: Text('No Requests Received')),
-                      Center(child: Text('No Requests Sent')),
+                    children: [
+                      Obx(
+                        () {
+                          if (_friendRequestController
+                              .receivedRequests.isEmpty) {
+                            return const Center(
+                              child: Text('No received requests.'),
+                            );
+                          }
+                          return ListView.builder(
+                            itemCount: _friendRequestController
+                                .receivedRequests.length,
+                            itemBuilder: (context, index) {
+                              final request = _friendRequestController
+                                  .receivedRequests[index];
+                              return FutureBuilder<UserModel?>(
+                                future: _friendRequestController
+                                    .getUserById(request.from),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) {
+                                    return const ListTile(
+                                      title: Text('Loading...'),
+                                    );
+                                  }
+                                  final user = snapshot.data!;
+                                  return Card(
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        radius: 25.r,
+                                        child: Text(user.firstName[0]),
+                                      ),
+                                      title: Text(
+                                        '${user.firstName} ${user.lastName}',
+                                        style: TextStyle(
+                                          color: CustomColors.black,
+                                          fontSize: 15.sp,
+                                        ),
+                                      ),
+                                      trailing: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          TextButton(
+                                              onPressed: () =>
+                                                  _friendRequestController
+                                                      .acceptRequest(request),
+                                              style: const ButtonStyle(
+                                                backgroundColor:
+                                                    WidgetStatePropertyAll(
+                                                        Colors.green),
+                                              ),
+                                              child: Icon(
+                                                Icons.check,
+                                                color: CustomColors.white,
+                                              )),
+                                          SizedBox(
+                                            width: 15.w,
+                                          ),
+                                          TextButton(
+                                              onPressed: () =>
+                                                  _friendRequestController
+                                                      .declineRequest(request),
+                                              style: const ButtonStyle(
+                                                backgroundColor:
+                                                    WidgetStatePropertyAll(
+                                                        Colors.red),
+                                              ),
+                                              child: Icon(
+                                                Icons.close,
+                                                color: CustomColors.white,
+                                              )),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      Obx(
+                        () {
+                          if (_friendRequestController.sentRequests.isEmpty) {
+                            return const Center(
+                              child: Text('No sent requests.'),
+                            );
+                          }
+                          return ListView.builder(
+                            itemCount:
+                                _friendRequestController.sentRequests.length,
+                            itemBuilder: (context, index) {
+                              final request =
+                                  _friendRequestController.sentRequests[index];
+                              return FutureBuilder<UserModel?>(
+                                future: _friendRequestController
+                                    .getUserById(request.to),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) {
+                                    return const ListTile(
+                                      title: Text("Loading..."),
+                                    );
+                                  }
+                                  final user = snapshot.data!;
+
+                                  return Card(
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        radius: 25.r,
+                                        child: Text(user.firstName[0]),
+                                      ),
+                                      title: Text(
+                                        '${user.firstName} ${user.lastName}',
+                                        style: TextStyle(
+                                          color: CustomColors.black,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      trailing: TextButton(
+                                        onPressed: () =>
+                                            _friendRequestController
+                                                .cancelRequest(request),
+                                        style: const ButtonStyle(
+                                          backgroundColor:
+                                              WidgetStatePropertyAll(
+                                                  Colors.red),
+                                        ),
+                                        child: Text(
+                                          'Cancel Request',
+                                          style: TextStyle(
+                                            color: CustomColors.white,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
