@@ -13,6 +13,8 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: 20.w),
         decoration: BoxDecoration(
           gradient: LinearGradient(

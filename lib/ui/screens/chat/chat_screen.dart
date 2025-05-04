@@ -74,6 +74,8 @@ class _ChatScreenState extends State<ChatScreen> {
         iconTheme: IconThemeData(color: CustomColors.white, size: 25.sp),
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: CustomColors.bgGradient,
