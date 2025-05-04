@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
+import 'package:whisper/controllers/auth_controller.dart';
+import 'package:whisper/controllers/friend_request_controller.dart';
 import 'package:whisper/routes/app_pages.dart';
 import 'package:whisper/ui/screens/chat/add_friends_screen.dart';
 import 'package:whisper/ui/widgets/chat_tile.dart';
@@ -14,6 +16,10 @@ class ChatsListScreen extends StatefulWidget {
 }
 
 class _ChatsListScreenState extends State<ChatsListScreen> {
+  final AuthController _authController = Get.find<AuthController>();
+  final FriendRequestController _friendRequestController =
+      Get.put(FriendRequestController());
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,15 +40,23 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
           Padding(
             padding: EdgeInsets.only(right: 15.w),
             child: GestureDetector(
-              child: CircleAvatar(
-                radius: 20.r,
+              child: Obx(
+                () {
+                  final user = _authController.userModel.value;
+                  return CircleAvatar(
+                    radius: 20.r,
+                    child: Text(
+                      user!.firstName[0],
+                      style: TextStyle(fontSize: 20.sp),
+                    ),
+                  );
+                },
               ),
               onTap: () => Get.toNamed(AppPages.profileScreen),
             ),
           ),
         ],
         toolbarHeight: 75.h,
-        iconTheme: IconThemeData(color: CustomColors.white, size: 25.sp),
       ),
       body: Container(
         width: double.infinity,
@@ -56,7 +70,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         ),
         child: Container(
           margin: EdgeInsets.only(top: 100.h),
-          padding: EdgeInsets.fromLTRB(10.0.w, 25.0.h, 10.0.w, 25.0.h),
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -72,11 +86,11 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
               topRight: Radius.circular(40.0.r),
             ),
           ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
-            child: Column(
-              children: [
-                SearchBar(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
+                child: SearchBar(
                   padding: WidgetStatePropertyAll(
                     EdgeInsets.symmetric(horizontal: 15.w),
                   ),
@@ -84,22 +98,40 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                   leading: const Icon(Icons.search),
                   backgroundColor: WidgetStatePropertyAll(CustomColors.white),
                 ),
-                SizedBox(
-                  height: 25.h,
-                ),
-                GestureDetector(
-                  child: const ChatTile(
-                      name: 'Knight',
-                      message: 'Hello',
-                      time: '07:05 pm',
-                      unreadMessages: 2,
-                      avatarUrl: ''),
-                  onTap: () {
-                    Get.toNamed(AppPages.chatScreen);
+              ),
+              Expanded(
+                child: StreamBuilder(
+                  stream: _friendRequestController.getFriendsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No friends yet.'));
+                    }
+                    final friends = snapshot.data!;
+                    return ListView.builder(
+                      padding: EdgeInsets.symmetric(
+                          vertical: 25.h, horizontal: 10.w),
+                      itemCount: friends.length,
+                      itemBuilder: (context, index) {
+                        final friend = friends[index];
+                        return GestureDetector(
+                          child: ChatTile(
+                            name: '${friend.firstName} ${friend.lastName}',
+                            message: 'Say Hi',
+                            time: '',
+                            unreadMessages: 0,
+                            avatar: friend.firstName[0],
+                          ),
+                          onTap: () => Get.toNamed(AppPages.chatScreen),
+                        );
+                      },
+                    );
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

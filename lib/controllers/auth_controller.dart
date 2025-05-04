@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:whisper/models/user_model.dart';
 import 'package:whisper/routes/app_pages.dart';
 
 class AuthController extends GetxController {
   final Rx<User?> _user = Rx<User?>(null);
   User? get user => _user.value;
+  final Rx<UserModel?> userModel = Rx<UserModel?>(null);
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -15,6 +17,13 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     _user.bindStream(_auth.userChanges());
+    ever(_user, (_) {
+      if (_user.value != null) {
+        fetchUserData();
+      } else {
+        userModel.value = null;
+      }
+    });
   }
 
   // CHECK USER AUTHENTICATION
@@ -183,5 +192,15 @@ class AuthController extends GetxController {
       backgroundColor: Colors.red,
       colorText: Colors.white,
     );
+  }
+
+  // FETCH USER DATA
+  Future<void> fetchUserData() async {
+    if (user != null) {
+      final doc = await _firestore.collection('users').doc(user!.uid).get();
+      if (doc.exists) {
+        userModel.value = UserModel.fromDocument(doc);
+      }
+    }
   }
 }

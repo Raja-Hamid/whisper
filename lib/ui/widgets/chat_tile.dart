@@ -6,7 +6,8 @@ class ChatTile extends StatelessWidget {
   final String message;
   final String time;
   final int unreadMessages;
-  final String avatarUrl;
+  final String avatar;
+  // final String avatarUrl;
 
   const ChatTile({
     super.key,
@@ -14,23 +15,25 @@ class ChatTile extends StatelessWidget {
     required this.message,
     required this.time,
     required this.unreadMessages,
-    required this.avatarUrl,
+    required this.avatar,
+    // required this.avatarUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-       shape: BoxShape.circle,
+        shape: BoxShape.circle,
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 28.r,
-            backgroundImage:
-                avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-            backgroundColor:
-                avatarUrl.isEmpty ? Colors.blueAccent : Colors.transparent,
+            child: Text(avatar, style: const TextStyle(fontSize: 23),),
+            // backgroundImage:
+            //     avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+            // backgroundColor:
+            //     avatarUrl.isEmpty ? Colors.blueAccent : Colors.transparent,
           ),
           SizedBox(width: 15.w),
           Expanded(
@@ -63,8 +66,7 @@ class ChatTile extends StatelessWidget {
               ),
               if (unreadMessages > 0)
                 Container(
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
                   decoration: BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(20.r),

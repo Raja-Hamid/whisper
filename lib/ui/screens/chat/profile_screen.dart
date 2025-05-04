@@ -14,12 +14,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthController _authController = Get.find<AuthController>();
 
-  bool showPassword = false;
-
   @override
   Widget build(BuildContext context) {
-    final user = _authController.user;
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: false,
@@ -67,51 +63,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 45.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 45.r,
-                ),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Text(
-                  'Raja Hamid',
-                  style: TextStyle(
-                      color: CustomColors.black,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700),
-                ),
-                SizedBox(
-                  height: 5.h,
-                ),
-                Text(
-                  'rajahamidrazzaq24@gmail.com',
-                  style: TextStyle(
-                    color: CustomColors.black.withAlpha((0.6 * 255).round()),
-                    fontSize: 15,
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    children: [
-                      _buildProfileOption(
-                        Icons.settings,
-                        "Settings",
+            child: Obx(
+              () {
+                final user = _authController.userModel.value;
+                if (user == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 45.r,
+                      child: Text(user.firstName[0], style: TextStyle(fontSize: 35.sp),),
+                    ),
+                    SizedBox(
+                      height: 15.h,
+                    ),
+                    Text(
+                      '${user.firstName} ${user.lastName}',
+                      style: TextStyle(
+                          color: CustomColors.black,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(
+                      height: 5.h,
+                    ),
+                    Text(
+                      user.email,
+                      style: TextStyle(
+                        color:
+                            CustomColors.black.withAlpha((0.6 * 255).round()),
+                        fontSize: 15,
                       ),
-                      _buildProfileOption(
-                        Icons.lock,
-                        "Privacy",
+                    ),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          _buildProfileOption(
+                            Icons.settings,
+                            "Settings",
+                          ),
+                          _buildProfileOption(
+                            Icons.lock,
+                            "Privacy",
+                          ),
+                          _buildProfileOption(
+                              Icons.help_outline, "Help & Support"),
+                          _buildProfileOption(Icons.logout, "Logout",
+                              onTap: () {
+                            _authController.signOut();
+                          }),
+                        ],
                       ),
-                      _buildProfileOption(Icons.help_outline, "Help & Support"),
-                      _buildProfileOption(Icons.logout, "Logout", onTap: () {
-                        _authController.signOut();
-                      }),
-                    ],
-                  ),
-                )
-              ],
+                    )
+                  ],
+                );
+              },
             ),
           ),
         ),

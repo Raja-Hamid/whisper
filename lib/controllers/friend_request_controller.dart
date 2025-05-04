@@ -10,9 +10,10 @@ class FriendRequestController extends GetxController {
   final authController = Get.find<AuthController>();
 
   final RxList<FriendRequestModel> sentRequests = <FriendRequestModel>[].obs;
-  final RxList<FriendRequestModel> receivedRequests = <FriendRequestModel>[].obs;
+  final RxList<FriendRequestModel> receivedRequests =
+      <FriendRequestModel>[].obs;
 
-  // Send Friend Request
+  // SEND FRIEND REQUEST
   Future<void> sendRequest(String toUserId) async {
     final currentUserId = authController.user?.uid;
 
@@ -87,8 +88,7 @@ class FriendRequestController extends GetxController {
     );
   }
 
-
-  // Fetch Requests
+  // FETCH REQUESTS
   Future<void> fetchRequests() async {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) return;
@@ -118,22 +118,33 @@ class FriendRequestController extends GetxController {
     );
   }
 
-
-  // Accept Request
+  // ACCEPT REQUEST
   Future<void> acceptRequest(FriendRequestModel request) async {
-    await _firestore
-        .collection('friend_requests')
-        .doc(request.id)
-        .update({'status': 'accepted'});
+    await _firestore.collection('friend_requests').doc(request.id).update({
+      'status': 'accepted',
+    });
 
-    // Optionally: add each other to "friends" collection
-    await _firestore.collection('users').doc(request.from).collection('friends').doc(request.to).set({});
-    await _firestore.collection('users').doc(request.to).collection('friends').doc(request.from).set({});
+    final timestamp = FieldValue.serverTimestamp();
+
+    await _firestore
+        .collection('users')
+        .doc(request.from)
+        .collection('friends')
+        .doc(request.to)
+        .set({'timestamp': timestamp});
+
+    await _firestore
+        .collection('users')
+        .doc(request.to)
+        .collection('friends')
+        .doc(request.from)
+        .set({'timestamp': timestamp});
 
     fetchRequests();
   }
 
-  // Decline Request
+
+  // DECLINE REQUEST
   Future<void> declineRequest(FriendRequestModel request) async {
     await _firestore
         .collection('friend_requests')
@@ -149,7 +160,7 @@ class FriendRequestController extends GetxController {
     return null;
   }
 
-  // Cancel Sent Request
+  // CANCEL SENT REQUEST
   Future<void> cancelRequest(FriendRequestModel request) async {
     try {
       await _firestore.collection('friend_requests').doc(request.id).delete();
@@ -175,4 +186,29 @@ class FriendRequestController extends GetxController {
     }
   }
 
+  // FRIENDS LIST
+  Stream<List<UserModel>> getFriendsStream() {
+    final currentUserId = authController.user?.uid;
+    if (currentUserId == null) return Stream.value([]);
+
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('friends')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      final users = <UserModel>[];
+
+      for (var doc in snapshot.docs) {
+        final userId = doc.id;
+        final userDoc =
+        await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          users.add(UserModel.fromDocument(userDoc));
+        }
+      }
+      return users;
+    });
+  }
 }
