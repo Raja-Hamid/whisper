@@ -96,9 +96,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   },
                   type: RoundedButtonType.primaryButtonGradient,
                 ),
-                SizedBox(
-                  height: 25.h,
-                ),
                 AuthenticationFooter(
                   leadingText: 'Don\'t have an account? ',
                   actionText: 'Sign Up',

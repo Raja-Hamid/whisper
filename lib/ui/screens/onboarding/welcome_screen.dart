@@ -11,6 +11,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w),
         decoration: BoxDecoration(
@@ -27,13 +28,13 @@ class WelcomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    margin: EdgeInsets.only(bottom: 0.h, top: 175.h),
-                    child: const CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/logo.png'),
-                      backgroundColor: Colors.transparent,
-                      radius: 150,
-                    ),
+                  const Spacer(
+                    flex: 1,
+                  ),
+                  CircleAvatar(
+                    backgroundImage: const AssetImage('assets/images/logo.png'),
+                    backgroundColor: Colors.transparent,
+                    radius: 150.r,
                   ),
                   SizedBox(
                     height: 60.h,
@@ -49,28 +50,25 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    height: 20.h,
+                    height: 25.h,
                   ),
                   Text(
                     'Welcome! Join us and remember,\neveryone is but a whisper away from you.',
                     style: TextStyle(color: Colors.white, fontSize: 17.sp),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(
-                    height: 25.h,
-                  ),
                 ],
               ),
             ),
-            RoundedButton(
-              title: 'Get Started',
-              type: RoundedButtonType.primaryButtonGradient,
-              onPressed: () {
-                Get.toNamed(AppPages.signInScreen);
-              },
-            ),
-            SizedBox(
-              height: 40.w,
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 35.h),
+              child: RoundedButton(
+                title: 'Get Started',
+                type: RoundedButtonType.primaryButtonGradient,
+                onPressed: () {
+                  Get.toNamed(AppPages.signInScreen);
+                },
+              ),
             ),
           ],
         ),

@@ -32,7 +32,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -240,11 +240,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 SizedBox(height: 20.h),
                 const SocialBar(),
-                SizedBox(height: 25.h),
                 AuthenticationFooter(
                   leadingText: 'Already have an account? ',
                   actionText: 'Sign In',
-                  onTapAction: () => Get.toNamed(AppPages.signUpScreen),
+                  onTapAction: () => Get.toNamed(AppPages.signInScreen),
                 ),
               ],
             ),

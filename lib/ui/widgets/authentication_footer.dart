@@ -16,24 +16,27 @@ class AuthenticationFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: leadingText,
-            style: TextStyle(color: CustomColors.black, fontSize: 14.sp),
-          ),
-          TextSpan(
-            text: actionText,
-            style: TextStyle(
-              color: CustomColors.black,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 30.h),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: leadingText,
+              style: TextStyle(color: CustomColors.black, fontSize: 14.sp),
             ),
-            recognizer: TapGestureRecognizer()..onTap = onTapAction,
-          ),
-        ],
+            TextSpan(
+              text: actionText,
+              style: TextStyle(
+                color: CustomColors.black,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+              recognizer: TapGestureRecognizer()..onTap = onTapAction,
+            ),
+          ],
+        ),
       ),
     );
   }

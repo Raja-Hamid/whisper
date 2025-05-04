@@ -2,13 +2,15 @@ import 'package:get/get.dart';
 import 'package:whisper/ui/screens/authorization/forgot_password_screen.dart';
 import 'package:whisper/ui/screens/authorization/sign_in_screen.dart';
 import 'package:whisper/ui/screens/authorization/sign_up_screen.dart';
-import 'package:whisper/ui/screens/authorization/welcome_screen.dart';
+import 'package:whisper/ui/screens/onboarding/splash_screen.dart';
+import 'package:whisper/ui/screens/onboarding/welcome_screen.dart';
 import 'package:whisper/ui/screens/chat/add_friends_screen.dart';
 import 'package:whisper/ui/screens/chat/chat_screen.dart';
 import 'package:whisper/ui/screens/chat/chats_list_screen.dart';
 import 'package:whisper/ui/screens/chat/profile_screen.dart';
 
 class AppPages {
+  static const splashScreen = '/splashScreen';
   static const welcomeScreen = '/welcomeScreen';
   static const signInScreen = '/signInScreen';
   static const signUpScreen = '/signUpScreen';
@@ -19,6 +21,7 @@ class AppPages {
   static const addFriendsScreen = '/addFriendsScreen';
 
   static final routes = [
+    GetPage(name: splashScreen, page: () => const SplashScreen()),
     GetPage(name: welcomeScreen, page: () => const WelcomeScreen()),
     GetPage(name: signInScreen, page: () => const SignInScreen()),
     GetPage(name: signUpScreen, page: () => const SignUpScreen()),

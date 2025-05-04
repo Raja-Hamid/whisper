@@ -180,14 +180,13 @@ class _SignInScreenState extends State<SignInScreen> {
                   children: [
                     Expanded(
                       child: Divider(
-                        color:
-                            CustomColors.grey.withAlpha((0.5 * 255).round()),
+                        color: CustomColors.grey.withAlpha((0.5 * 255).round()),
                         thickness: 1.h,
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 0.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 0.h),
                       child: Text(
                         'Sign in with',
                         style: TextStyle(
@@ -199,8 +198,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     Expanded(
                       child: Divider(
-                        color:
-                            CustomColors.grey.withAlpha((0.5 * 255).round()),
+                        color: CustomColors.grey.withAlpha((0.5 * 255).round()),
                         thickness: 1.h,
                       ),
                     ),
@@ -208,7 +206,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 SizedBox(height: 20.h),
                 const SocialBar(),
-                SizedBox(height: 200.h),
+                SizedBox(height: 190.h),
                 AuthenticationFooter(
                   leadingText: 'Don\'t have an account? ',
                   actionText: 'Sign Up',

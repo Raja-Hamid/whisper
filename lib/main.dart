@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       child: GetMaterialApp(
         theme: ThemeData(fontFamily: "Poppins"),
         debugShowCheckedModeBanner: false,
-        initialRoute: AppPages.welcomeScreen,
+        initialRoute: AppPages.splashScreen,
         getPages: AppPages.routes,
       ),
     );
