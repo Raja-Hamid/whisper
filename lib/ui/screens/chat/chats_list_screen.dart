@@ -56,7 +56,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             ),
           ),
         ],
-        toolbarHeight: 75.h,
+        toolbarHeight: kToolbarHeight,
       ),
       body: Container(
         width: double.infinity,
@@ -68,73 +68,74 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Container(
-          margin: EdgeInsets.only(top: 100.h),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.white.withAlpha((0.5 * 255).round()),
-              ],
-              stops: const [0, 0],
+        child: SafeArea(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.white.withAlpha((0.5 * 255).round()),
+                ],
+                stops: const [0, 0],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(40.0.r),
+                topRight: Radius.circular(40.0.r),
+              ),
             ),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(40.0.r),
-              topRight: Radius.circular(40.0.r),
-            ),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
-                child: SearchBar(
-                  padding: WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(horizontal: 15.w),
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
+                  child: SearchBar(
+                    padding: WidgetStatePropertyAll(
+                      EdgeInsets.symmetric(horizontal: 15.w),
+                    ),
+                    hintText: 'Search',
+                    leading: const Icon(Icons.search),
+                    backgroundColor: WidgetStatePropertyAll(CustomColors.white),
                   ),
-                  hintText: 'Search',
-                  leading: const Icon(Icons.search),
-                  backgroundColor: WidgetStatePropertyAll(CustomColors.white),
                 ),
-              ),
-              Expanded(
-                child: StreamBuilder(
-                  stream: _friendRequestController.getFriendsStream(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No friends yet.'));
-                    }
-                    final friends = snapshot.data!;
-                    return ListView.builder(
-                      padding: EdgeInsets.symmetric(
-                          vertical: 25.h, horizontal: 10.w),
-                      itemCount: friends.length,
-                      itemBuilder: (context, index) {
-                        final friend = friends[index];
-                        return GestureDetector(
-                          child: ChatTile(
-                            name: '${friend.firstName} ${friend.lastName}',
-                            message: 'Say Hi',
-                            time: '',
-                            unreadMessages: 0,
-                            avatar: friend.firstName[0],
-                          ),
-                          onTap: () => Get.toNamed(
-                            AppPages.chatScreen,
-                            arguments: friend,
-                          ),
-                        );
-                      },
-                    );
-                  },
+                Expanded(
+                  child: StreamBuilder(
+                    stream: _friendRequestController.getFriendsStream(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No friends yet.'));
+                      }
+                      final friends = snapshot.data!;
+                      return ListView.builder(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 20.h, horizontal: 10.w),
+                        itemCount: friends.length,
+                        itemBuilder: (context, index) {
+                          final friend = friends[index];
+                          return GestureDetector(
+                            child: ChatTile(
+                              name: '${friend.firstName} ${friend.lastName}',
+                              message: 'Say Hi',
+                              time: '',
+                              unreadMessages: 0,
+                              avatar: friend.firstName[0],
+                            ),
+                            onTap: () => Get.toNamed(
+                              AppPages.chatScreen,
+                              arguments: friend,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

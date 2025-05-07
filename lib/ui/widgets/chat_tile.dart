@@ -22,6 +22,7 @@ class ChatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: EdgeInsets.only(bottom: 15.h),
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
       ),
@@ -29,7 +30,10 @@ class ChatTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 28.r,
-            child: Text(avatar, style: const TextStyle(fontSize: 23),),
+            child: Text(
+              avatar,
+              style: const TextStyle(fontSize: 23),
+            ),
             // backgroundImage:
             //     avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
             // backgroundColor:
