@@ -45,7 +45,6 @@ class FriendRequestController extends GetxController {
       return;
     }
 
-    // Check for existing request (from currentUser -> toUserId)
     final existingRequest = await _firestore
         .collection('friend_requests')
         .where('from', isEqualTo: currentUserId)
@@ -53,7 +52,6 @@ class FriendRequestController extends GetxController {
         .where('status', isEqualTo: 'pending')
         .get();
 
-    // Optional: Check reverse direction (in case target user already sent one)
     final reverseRequest = await _firestore
         .collection('friend_requests')
         .where('from', isEqualTo: toUserId)
@@ -83,7 +81,6 @@ class FriendRequestController extends GetxController {
       return;
     }
 
-    // All checks passed, send the request
     await _firestore.collection('friend_requests').add({
       'from': currentUserId,
       'to': toUserId,
@@ -105,7 +102,6 @@ class FriendRequestController extends GetxController {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) return;
 
-    // Listen to sent requests
     _sentRequestSub = _firestore
         .collection('friend_requests')
         .where('from', isEqualTo: currentUserId)
@@ -116,7 +112,6 @@ class FriendRequestController extends GetxController {
           snapshot.docs.map((e) => FriendRequestModel.fromDoc(e)).toList();
     });
 
-    // Listen to received requests
     _receivedRequestSub = _firestore
         .collection('friend_requests')
         .where('to', isEqualTo: currentUserId)

@@ -5,11 +5,9 @@ import 'package:whisper/models/chat_model.dart';
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RxList<ChatModel> messages = <ChatModel>[].obs;
-
-  // For keeping track of the last fetched message
   DocumentSnapshot? _lastFetchedMessage;
 
-  // Listen to real-time updates
+
   void listenToMessages(String currentUserId, String friendUserId) {
     final chatId = _generateChatId(currentUserId, friendUserId);
     _firestore
@@ -20,7 +18,8 @@ class ChatController extends GetxController {
         .limit(20)
         .snapshots()
         .listen((snapshot) {
-      final newMessages = snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
+      final newMessages =
+          snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
       messages.assignAll(newMessages);
       if (snapshot.docs.isNotEmpty) {
         _lastFetchedMessage = snapshot.docs.last;
@@ -28,7 +27,6 @@ class ChatController extends GetxController {
     });
   }
 
-  // Paginate messages: Load more when the user scrolls up
   Stream<List<ChatModel>> getMessagesPaginated({
     required String currentUserId,
     required String friendUserId,
@@ -48,7 +46,8 @@ class ChatController extends GetxController {
     }
 
     return query.snapshots().map((snapshot) {
-      final messages = snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
+      final messages =
+          snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
       if (snapshot.docs.isNotEmpty) {
         _lastFetchedMessage = snapshot.docs.last;
       }
@@ -56,7 +55,6 @@ class ChatController extends GetxController {
     });
   }
 
-  // Send message with optimized write batch
   Future<void> sendMessage({
     required String senderId,
     required String receiverId,
@@ -64,6 +62,17 @@ class ChatController extends GetxController {
   }) async {
     final chatId = _generateChatId(senderId, receiverId);
     final chatRef = _firestore.collection('chats').doc(chatId);
+
+    final localTimestamp = DateTime.now();
+    messages.insert(
+      0,
+      ChatModel(
+        senderId: senderId,
+        receiverId: receiverId,
+        message: message,
+        timestamp: localTimestamp,
+      ),
+    );
 
     final doc = await chatRef.get();
     if (!doc.exists) {
@@ -77,7 +86,8 @@ class ChatController extends GetxController {
       'senderId': senderId,
       'receiverId': receiverId,
       'message': message,
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': localTimestamp,
+      'serverTimestamp': FieldValue.serverTimestamp(),
     });
   }
 

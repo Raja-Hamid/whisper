@@ -38,7 +38,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leadingWidth: 45.w,
@@ -57,7 +57,7 @@ class _ChatScreenState extends State<ChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Whisper',
+                  receiver.firstName,
                   style: TextStyle(
                     color: CustomColors.white,
                     fontSize: 18.sp,
@@ -124,8 +124,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 stops: const [0, 0],
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(40.0.r),
-                topRight: Radius.circular(40.0.r),
+                topLeft: Radius.circular(30.0.r),
+                topRight: Radius.circular(30.0.r),
               ),
             ),
             child: Column(
@@ -151,6 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         },
                       );
                       return ListView.builder(
+                        physics: const BouncingScrollPhysics(),
                         controller: _scrollController,
                         reverse: true,
                         itemCount: messages.length,
@@ -169,15 +170,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 ChatInputField(
                   messageController: _messageController,
-                  onTap: () async {
+                  onTap: () {
                     final text = _messageController.text.trim();
+                    _messageController.clear();
                     if (text.isNotEmpty) {
-                      await _chatController.sendMessage(
+                      _chatController.sendMessage(
                         senderId: currentUser.uid,
                         receiverId: receiver.uid,
                         message: text,
                       );
-                      _messageController.clear();
                     }
                   },
                 ),
