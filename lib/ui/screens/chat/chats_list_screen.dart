@@ -89,7 +89,8 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 10.h, horizontal: 15.w),
                   child: SearchBar(
                     padding: WidgetStatePropertyAll(
                       EdgeInsets.symmetric(horizontal: 15.w),

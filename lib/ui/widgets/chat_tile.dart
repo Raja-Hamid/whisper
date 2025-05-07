@@ -22,7 +22,7 @@ class ChatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 15.h),
+      margin: EdgeInsets.only(bottom: 20.h),
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
       ),
