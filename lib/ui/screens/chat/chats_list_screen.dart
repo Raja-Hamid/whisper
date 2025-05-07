@@ -124,7 +124,10 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                             unreadMessages: 0,
                             avatar: friend.firstName[0],
                           ),
-                          onTap: () => Get.toNamed(AppPages.chatScreen),
+                          onTap: () => Get.toNamed(
+                            AppPages.chatScreen,
+                            arguments: friend,
+                          ),
                         );
                       },
                     );

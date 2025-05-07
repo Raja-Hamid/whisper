@@ -1,40 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:whisper/constants/colors.dart';
+import 'package:whisper/controllers/auth_controller.dart';
+import 'package:whisper/controllers/chat_controller.dart';
+import 'package:whisper/models/user_model.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final UserModel receiverUser;
+  const ChatScreen({super.key, required this.receiverUser});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final _chatController = Get.put(ChatController());
+  final _authController = Get.find<AuthController>();
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _chatController.listenToMessages(
+      _authController.user!.uid,
+      widget.receiverUser.uid,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUser = _authController.user!;
+    final receiver = widget.receiverUser;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        leadingWidth: 45.w,
         title: Row(
           children: [
             CircleAvatar(
               radius: 20.r,
+              backgroundImage: NetworkImage(
+                'https://ui-avatars.com/api/?name=${receiver.firstName}+${receiver.lastName}',
+              ),
             ),
-            SizedBox(
-              width: 10.w,
-            ),
+            SizedBox(width: 10.w),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Whisper',
-                  style: TextStyle(
-                    color: CustomColors.white,
-                    fontSize: 18.sp,
-                  ),
+                  '${receiver.firstName} ${receiver.lastName}',
+                  style: TextStyle(color: CustomColors.white, fontSize: 18.sp),
                 ),
                 Text(
                   'Online',
@@ -47,31 +67,6 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(
-              Icons.videocam,
-              color: CustomColors.white,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 10.w),
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: Icon(
-                Icons.call,
-                color: CustomColors.white,
-              ),
-            ),
-          ),
-        ],
-        toolbarHeight: 75.h,
-        iconTheme: IconThemeData(color: CustomColors.white, size: 25.sp),
       ),
       body: Container(
         width: double.infinity,
@@ -85,7 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         child: Container(
           margin: EdgeInsets.only(top: 100.h),
-          padding: EdgeInsets.fromLTRB(10.0.w, 25.0.h, 10.0.w, 25.0.h),
+          padding: EdgeInsets.fromLTRB(10.0.w, 25.0.h, 10.0.w, 10.0.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -103,11 +98,80 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           child: Column(
             children: [
-              const Spacer(),
+              Expanded(
+                child: Obx(() {
+                  final messages = _chatController.messages;
+
+                  if (messages.isEmpty) {
+                    return const Center(child: Text("No messages yet."));
+                  }
+
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        0.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
+
+                  return ListView.builder(
+                    controller: _scrollController,
+                    reverse: true,
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = messages[index];
+                      final isMe = msg.senderId == currentUser.uid;
+
+                      return Align(
+                        alignment: isMe
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Container(
+                          margin: EdgeInsets.symmetric(
+                              vertical: 4.h, horizontal: 8.w),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 10.h, horizontal: 14.w),
+                          constraints: BoxConstraints(maxWidth: 250.w),
+                          decoration: BoxDecoration(
+                            color: isMe
+                                ? CustomColors.primaryColor1
+                                : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                msg.message,
+                                style: TextStyle(
+                                  color: isMe ? Colors.white : Colors.black87,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                              SizedBox(height: 5.h),
+                              Text(
+                                DateFormat('hh:mm a').format(msg.timestamp),
+                                style: TextStyle(
+                                  color: isMe ? Colors.white70 : Colors.black54,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ),
+              SizedBox(height: 10.h),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: _messageController,
                       decoration: InputDecoration(
                         suffixIcon: const Icon(Icons.emoji_emotions),
                         hintText: 'Message',
@@ -124,15 +188,23 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 10.w,
-                  ),
-                  CircleAvatar(
-                    radius: 25.r,
-                    backgroundColor: CustomColors.primaryColor1,
-                    child: Icon(
-                      Icons.send,
-                      color: CustomColors.white,
+                  SizedBox(width: 10.w),
+                  GestureDetector(
+                    onTap: () async {
+                      final text = _messageController.text.trim();
+                      if (text.isNotEmpty) {
+                        await _chatController.sendMessage(
+                          senderId: currentUser.uid,
+                          receiverId: receiver.uid,
+                          message: text,
+                        );
+                        _messageController.clear();
+                      }
+                    },
+                    child: CircleAvatar(
+                      radius: 25.r,
+                      backgroundColor: CustomColors.primaryColor1,
+                      child: Icon(Icons.send, color: CustomColors.white),
                     ),
                   ),
                 ],

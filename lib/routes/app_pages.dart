@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:whisper/models/user_model.dart';
 import 'package:whisper/ui/screens/authorization/forgot_password_screen.dart';
 import 'package:whisper/ui/screens/authorization/sign_in_screen.dart';
 import 'package:whisper/ui/screens/authorization/sign_up_screen.dart';
@@ -28,7 +29,13 @@ class AppPages {
     GetPage(
         name: forgotPasswordScreen, page: () => const ForgotPasswordScreen()),
     GetPage(name: chatsListScreen, page: () => const ChatsListScreen()),
-    GetPage(name: chatScreen, page: () => const ChatScreen()),
+    GetPage(
+      name: chatScreen,
+      page: () {
+        final user = Get.arguments as UserModel;
+        return ChatScreen(receiverUser: user);
+      },
+    ),
     GetPage(name: profileScreen, page: () => const ProfileScreen()),
     GetPage(name: addFriendsScreen, page: () => const AddFriendsScreen()),
   ];
