@@ -43,7 +43,7 @@ class _SignInScreenState extends State<SignInScreen> {
         child: SafeArea(
           child: Container(
             margin: EdgeInsets.only(top: 125.h),
-            padding: EdgeInsets.symmetric(vertical: 25.h, horizontal: 25.w),
+            padding: EdgeInsets.symmetric(vertical: 25.h, horizontal: 25.h),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -59,166 +59,170 @@ class _SignInScreenState extends State<SignInScreen> {
                 topRight: Radius.circular(40.0.r),
               ),
             ),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Hey there,',
-                        style: TextStyle(
-                          fontSize: 20.sp,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Hey there,',
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Welcome Back',
+                  style: TextStyle(
+                    fontSize: 30.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Expanded(
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: 25.h,
                         ),
-                      ),
-                      Text(
-                        'Welcome Back',
-                        style: TextStyle(
-                          fontSize: 30.sp,
-                          fontWeight: FontWeight.w700,
+                        CustomTextField(
+                          hintText: 'Email',
+                          icon: Icons.email,
+                          keyboardType: TextInputType.emailAddress,
+                          controller: _emailController,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Email is required';
+                            }
+                            final regExp = RegExp(kEmailRegex);
+                            if (!regExp.hasMatch(value.trim())) {
+                              return 'Enter a valid email address';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 25.h,
-                  ),
-                  CustomTextField(
-                    hintText: 'Email',
-                    icon: Icons.email,
-                    keyboardType: TextInputType.emailAddress,
-                    controller: _emailController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email is required';
-                      }
-                      final regExp = RegExp(kEmailRegex);
-                      if (!regExp.hasMatch(value.trim())) {
-                        return 'Enter a valid email address';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(
-                    height: 25.h,
-                  ),
-                  CustomTextField(
-                      hintText: 'Password',
-                      icon: Icons.lock,
-                      obscureText: !showPassword,
-                      suffixIcon: showPassword == true
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      controller: _passwordController,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Password is required';
-                        }
-                        return null;
-                      },
-                      onIconTap: () {
-                        setState(() {
-                          showPassword = !showPassword;
-                        });
-                      }),
-                  SizedBox(
-                    height: 15.h,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: rememberPassword,
-                            checkColor: CustomColors.white,
-                            activeColor: Colors.blueAccent,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                rememberPassword = value!;
-                              });
+                        SizedBox(
+                          height: 25.h,
+                        ),
+                        CustomTextField(
+                            hintText: 'Password',
+                            icon: Icons.lock,
+                            obscureText: !showPassword,
+                            suffixIcon: showPassword == true
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            controller: _passwordController,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Password is required';
+                              }
+                              return null;
                             },
-                          ),
-                          Text(
-                            'Remember Me',
-                            style: TextStyle(color: CustomColors.black),
-                          ),
-                        ],
-                      ),
-                      GestureDetector(
-                        child: Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: CustomColors.grey,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14.sp,
-                          ),
+                            onIconTap: () {
+                              setState(() {
+                                showPassword = !showPassword;
+                              });
+                            }),
+                        SizedBox(
+                          height: 15.h,
                         ),
-                        onTap: () {
-                          Get.toNamed(AppPages.forgotPasswordScreen);
-                        },
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 15.h,
-                  ),
-                  RoundedButton(
-                    title: 'Sign In',
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        await _authController.signIn(
-                          email: _emailController.text.trim(),
-                          password: _passwordController.text.trim(),
-                        );
-                      }
-                    },
-                    type: RoundedButtonType.primaryButtonGradient,
-                  ),
-                  SizedBox(
-                    height: 25.h,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color:
-                              CustomColors.grey.withAlpha((0.5 * 255).round()),
-                          thickness: 1.h,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: rememberPassword,
+                                  checkColor: CustomColors.white,
+                                  activeColor: Colors.blueAccent,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      rememberPassword = value!;
+                                    });
+                                  },
+                                ),
+                                Text(
+                                  'Remember Me',
+                                  style: TextStyle(color: CustomColors.black),
+                                ),
+                              ],
+                            ),
+                            GestureDetector(
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: CustomColors.grey,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                              onTap: () {
+                                Get.toNamed(AppPages.forgotPasswordScreen);
+                              },
+                            ),
+                          ],
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.w, vertical: 0.h),
-                        child: Text(
-                          'Sign in with',
-                          style: TextStyle(
-                            color: CustomColors.grey,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14.sp,
-                          ),
+                        SizedBox(
+                          height: 15.h,
                         ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color:
-                              CustomColors.grey.withAlpha((0.5 * 255).round()),
-                          thickness: 1.h,
+                        RoundedButton(
+                          title: 'Sign In',
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              await _authController.signIn(
+                                email: _emailController.text.trim(),
+                                password: _passwordController.text.trim(),
+                              );
+                            }
+                          },
+                          type: RoundedButtonType.primaryButtonGradient,
                         ),
-                      ),
-                    ],
+                        SizedBox(
+                          height: 25.h,
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                color: CustomColors.grey
+                                    .withAlpha((0.5 * 255).round()),
+                                thickness: 1.h,
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w, vertical: 0.h),
+                              child: Text(
+                                'Sign in with',
+                                style: TextStyle(
+                                  color: CustomColors.grey,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: CustomColors.grey
+                                    .withAlpha((0.5 * 255).round()),
+                                thickness: 1.h,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20.h),
+                        const SocialBar(),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 20.h),
-                  const SocialBar(),
-                  AuthenticationFooter(
-                    leadingText: 'Don\'t have an account? ',
-                    actionText: 'Sign Up',
-                    onTapAction: () => Get.toNamed(AppPages.signUpScreen),
-                  ),
-                ],
-              ),
+                ),
+                AuthenticationFooter(
+                  leadingText: 'Don\'t have an account? ',
+                  actionText: 'Sign Up',
+                  onTapAction: () => Get.toNamed(AppPages.signUpScreen),
+                ),
+              ],
             ),
           ),
         ),
