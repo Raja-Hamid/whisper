@@ -21,73 +21,70 @@ class ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 20.h),
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 28.r,
-            child: Text(
-              avatar,
-              style: const TextStyle(fontSize: 23),
-            ),
-            // backgroundImage:
-            //     avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-            // backgroundColor:
-            //     avatarUrl.isEmpty ? Colors.blueAccent : Colors.transparent,
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 28.r,
+          child: Text(
+            avatar,
+            style: const TextStyle(fontSize: 23),
           ),
-          SizedBox(width: 15.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18.sp,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  message,
-                  style: TextStyle(color: Colors.grey[600]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.start,
+          // backgroundImage:
+          //     avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+          // backgroundColor:
+          //     avatarUrl.isEmpty ? Colors.blueAccent : Colors.transparent,
+        ),
+        SizedBox(width: 15.w),
+        Expanded(
+          child: Column(
             children: [
-              Text(
-                time,
-                style: const TextStyle(color: Colors.black),
-              ),
-              if (unreadMessages > 0)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    unreadMessages.toString(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    name,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18.sp,
                     ),
                   ),
-                ),
+                  Text(
+                    time,
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    message,
+                    style: TextStyle(color: Colors.grey[600]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (unreadMessages > 0)
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        unreadMessages.toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

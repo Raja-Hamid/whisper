@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:whisper/controllers/auth_controller.dart';
+import 'package:whisper/controllers/chat_controller.dart';
 import 'package:whisper/controllers/friend_request_controller.dart';
+import 'package:whisper/models/chat_preview_model.dart';
 import 'package:whisper/routes/app_pages.dart';
 import 'package:whisper/ui/screens/chat/add_friends_screen.dart';
 import 'package:whisper/ui/widgets/chat_tile.dart';
@@ -19,6 +21,20 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
   final AuthController _authController = Get.find<AuthController>();
   final FriendRequestController _friendRequestController =
       Get.put(FriendRequestController());
+  final ChatController _chatController = Get.put(ChatController());
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays == 0) {
+      return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else {
+      return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,24 +132,52 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                         return const Center(child: Text('No friends yet.'));
                       }
                       final friends = snapshot.data!;
-                      return ListView.builder(
+                      return ListView.separated(
+                        separatorBuilder: (_, __) => const SizedBox(height: 20),
                         padding: EdgeInsets.symmetric(
                             vertical: 20.h, horizontal: 10.w),
                         itemCount: friends.length,
                         itemBuilder: (context, index) {
                           final friend = friends[index];
-                          return GestureDetector(
-                            child: ChatTile(
-                              name: '${friend.firstName} ${friend.lastName}',
-                              message: 'Say Hi',
-                              time: '',
-                              unreadMessages: 0,
-                              avatar: friend.firstName[0],
+                          final currentUserId =
+                              _authController.userModel.value!.uid;
+
+                          return FutureBuilder<ChatPreview>(
+                            future: _chatController.getChatPreview(
+                              currentUserId: currentUserId,
+                              friendUserId: friend.uid,
                             ),
-                            onTap: () => Get.toNamed(
-                              AppPages.chatScreen,
-                              arguments: friend,
-                            ),
+                            builder: (context, snapshot) {
+                              String message = 'Say Hi';
+                              String time = '';
+
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const ListTile(
+                                    title: Text('Loading...'));
+                              }
+
+                              if (snapshot.hasData) {
+                                message = snapshot.data!.message;
+                                time =
+                                    _formatTimestamp(snapshot.data!.timestamp);
+                              }
+
+                              return GestureDetector(
+                                onTap: () => Get.toNamed(
+                                  AppPages.chatScreen,
+                                  arguments: friend,
+                                ),
+                                child: ChatTile(
+                                  name:
+                                      '${friend.firstName} ${friend.lastName}',
+                                  message: message,
+                                  time: time,
+                                  unreadMessages: 0,
+                                  avatar: friend.firstName[0],
+                                ),
+                              );
+                            },
                           );
                         },
                       );

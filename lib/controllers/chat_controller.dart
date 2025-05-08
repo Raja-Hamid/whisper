@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:whisper/models/chat_model.dart';
+import 'package:whisper/models/chat_preview_model.dart';
+import 'package:whisper/models/friend_request_model.dart';
 
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -94,5 +96,41 @@ class ChatController extends GetxController {
   String _generateChatId(String uid1, String uid2) {
     final sorted = [uid1, uid2]..sort();
     return '${sorted[0]}_${sorted[1]}';
+  }
+
+  Future<ChatPreview> getChatPreview({
+    required String currentUserId,
+    required String friendUserId,
+  }) async {
+    final chatId = _generateChatId(currentUserId, friendUserId);
+
+    // Get last message
+    final messageSnap = await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+
+    if (messageSnap.docs.isNotEmpty) {
+      final lastMessage = ChatModel.fromDocument(messageSnap.docs.first);
+      return ChatPreview(message: lastMessage.message, timestamp: lastMessage.timestamp);
+    }
+
+    // If no message, get friendship timestamp
+    final friendRequestSnap = await _firestore
+        .collection('friendRequests')
+        .where('status', isEqualTo: 'accepted')
+        .where('from', whereIn: [currentUserId, friendUserId])
+        .where('to', whereIn: [currentUserId, friendUserId])
+        .get();
+
+    if (friendRequestSnap.docs.isNotEmpty) {
+      final friendship = FriendRequestModel.fromDoc(friendRequestSnap.docs.first);
+      return ChatPreview(message: 'Say Hi', timestamp: friendship.timestamp);
+    }
+
+    return ChatPreview(message: 'Say Hi', timestamp: DateTime.now());
   }
 }

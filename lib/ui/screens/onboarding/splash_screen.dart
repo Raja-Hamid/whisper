@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
+import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/routes/app_pages.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,14 +14,20 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   @override
+  @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 2500), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 2500));
+      final isAuthenticated = Get.find<AuthController>().isAuthenticated;
+      if (isAuthenticated) {
+        Get.offAllNamed(AppPages.chatsListScreen);
+      } else {
         Get.offAllNamed(AppPages.welcomeScreen);
-      });
+      }
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
