@@ -43,10 +43,15 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
               child: Obx(
                 () {
                   final user = _authController.userModel.value;
+                  if (user == null) {
+                    return CircleAvatar(
+                      radius: 20.r,
+                    );
+                  }
                   return CircleAvatar(
                     radius: 20.r,
                     child: Text(
-                      user!.firstName[0],
+                      user.firstName[0],
                       style: TextStyle(fontSize: 20.sp),
                     ),
                   );
