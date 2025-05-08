@@ -190,7 +190,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.grey,
+        backgroundColor: const Color(0xffe39f96),
         shape: const CircleBorder(),
         child: const Icon(
           Icons.add,
