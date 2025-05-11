@@ -22,13 +22,46 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  bool _isSending = false;
+
   @override
   void initState() {
     super.initState();
     _chatController.listenToMessages(
-      _authController.user!.uid,
-      widget.receiverUser.uid,
+      currentUserId: _authController.user!.uid,
+      friendUserId: widget.receiverUser.uid,
     );
+  }
+
+  void _handleSend() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _isSending) return;
+
+    _messageController.clear();
+    FocusScope.of(context).unfocus();
+
+    setState(() => _isSending = true);
+
+    await _chatController.sendMessage(
+      currentUserId: _authController.user!.uid,
+      friendUserId: widget.receiverUser.uid,
+      message: text,
+    );
+
+
+    setState(() => _isSending = false);
+
+    _scrollController.animateTo(
+      0.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _chatController.messages.clear();
+    super.dispose();
   }
 
   @override
@@ -170,17 +203,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 ChatInputField(
                   messageController: _messageController,
-                  onTap: () {
-                    final text = _messageController.text.trim();
-                    _messageController.clear();
-                    if (text.isNotEmpty) {
-                      _chatController.sendMessage(
-                        senderId: currentUser.uid,
-                        receiverId: receiver.uid,
-                        message: text,
-                      );
-                    }
-                  },
+                  onTap: _handleSend,
+                  isSending: _isSending,
                 ),
               ],
             ),

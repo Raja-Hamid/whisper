@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:whisper/constants/colors.dart';
 
-enum RoundedButtonType { primaryButtonGradient, secondaryButtonGradient, textGradient }
+enum RoundedButtonType { primaryButtonGradient, welcomeButtonGradient, textGradient }
 
 class RoundedButton extends StatelessWidget {
   final String title;
@@ -23,13 +23,13 @@ class RoundedButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: type == RoundedButtonType.secondaryButtonGradient
-                ? CustomColors.secondaryGradient
+            colors: type == RoundedButtonType.welcomeButtonGradient
+                ? CustomColors.welcomeButtonGradient
                 : CustomColors.primaryButtonGradient,
           ),
           borderRadius: BorderRadius.circular(25),
           boxShadow: type == RoundedButtonType.primaryButtonGradient ||
-                  type == RoundedButtonType.secondaryButtonGradient
+                  type == RoundedButtonType.welcomeButtonGradient
               ? const [
                   BoxShadow(
                       color: Colors.black26,
@@ -44,15 +44,15 @@ class RoundedButton extends StatelessWidget {
         textColor: CustomColors.primaryColor1,
         minWidth: double.maxFinite,
         elevation: type == RoundedButtonType.primaryButtonGradient ||
-                type == RoundedButtonType.secondaryButtonGradient
+                type == RoundedButtonType.welcomeButtonGradient
             ? 0
             : 1,
         color: type == RoundedButtonType.primaryButtonGradient ||
-                type == RoundedButtonType.secondaryButtonGradient
+                type == RoundedButtonType.welcomeButtonGradient
             ? Colors.transparent
             : CustomColors.white,
         child: type == RoundedButtonType.primaryButtonGradient ||
-                type == RoundedButtonType.secondaryButtonGradient
+                type == RoundedButtonType.welcomeButtonGradient
             ? Text(
                 title,
                 style: TextStyle(

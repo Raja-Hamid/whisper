@@ -131,50 +131,41 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(child: Text('No friends yet.'));
                       }
+
                       final friends = snapshot.data!;
-                      return ListView.separated(
-                        separatorBuilder: (_, __) => const SizedBox(height: 20),
-                        padding: EdgeInsets.symmetric(
-                            vertical: 20.h, horizontal: 10.w),
+                      final currentUserId = _authController.userModel.value!.uid;
+
+                      return ListView.builder(
+                        padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 10.w),
                         itemCount: friends.length,
                         itemBuilder: (context, index) {
                           final friend = friends[index];
-                          final currentUserId =
-                              _authController.userModel.value!.uid;
 
-                          return FutureBuilder<ChatPreview>(
-                            future: _chatController.getChatPreview(
+                          return StreamBuilder<ChatPreview>(
+                            stream: _chatController.getChatPreview(
                               currentUserId: currentUserId,
                               friendUserId: friend.uid,
                             ),
                             builder: (context, snapshot) {
-                              String message = 'Say Hi';
-                              String time = '';
-
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const ListTile(
-                                    title: Text('Loading...'));
+                              if (!snapshot.hasData) {
+                                return const SizedBox();
                               }
 
-                              if (snapshot.hasData) {
-                                message = snapshot.data!.message;
-                                time =
-                                    _formatTimestamp(snapshot.data!.timestamp);
-                              }
-
-                              return GestureDetector(
-                                onTap: () => Get.toNamed(
-                                  AppPages.chatScreen,
-                                  arguments: friend,
-                                ),
-                                child: ChatTile(
-                                  name:
-                                      '${friend.firstName} ${friend.lastName}',
-                                  message: message,
-                                  time: time,
-                                  unreadMessages: 0,
-                                  avatar: friend.firstName[0],
+                              final preview = snapshot.data!;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: GestureDetector(
+                                  onTap: () => Get.toNamed(
+                                    AppPages.chatScreen,
+                                    arguments: friend,
+                                  ),
+                                  child: ChatTile(
+                                    name: '${friend.firstName} ${friend.lastName}',
+                                    message: preview.message,
+                                    time: _formatTimestamp(preview.timestamp),
+                                    unreadMessages: 0,
+                                    avatar: friend.firstName[0],
+                                  ),
                                 ),
                               );
                             },

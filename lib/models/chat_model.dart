@@ -6,7 +6,7 @@ class ChatModel {
   final String message;
   final DateTime timestamp;
 
-  ChatModel({
+  const ChatModel({
     required this.senderId,
     required this.receiverId,
     required this.message,
@@ -16,10 +16,10 @@ class ChatModel {
   factory ChatModel.fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ChatModel(
-      senderId: data['senderId'],
-      receiverId: data['receiverId'],
-      message: data['message'],
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      senderId: data['senderId'] ?? '',
+      receiverId: data['receiverId'] ?? '',
+      message: data['message'] ?? '',
+      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

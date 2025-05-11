@@ -7,130 +7,120 @@ import 'package:whisper/models/friend_request_model.dart';
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RxList<ChatModel> messages = <ChatModel>[].obs;
-  DocumentSnapshot? _lastFetchedMessage;
 
-
-  void listenToMessages(String currentUserId, String friendUserId) {
+  Future<void> _initializeChatIfNeeded(String currentUserId, String friendUserId) async {
     final chatId = _generateChatId(currentUserId, friendUserId);
-    _firestore
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .limit(20)
-        .snapshots()
-        .listen((snapshot) {
-      final newMessages =
-          snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
-      messages.assignAll(newMessages);
-      if (snapshot.docs.isNotEmpty) {
-        _lastFetchedMessage = snapshot.docs.last;
+    final chatRef = _firestore.collection('chats').doc(chatId);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(chatRef);
+      if (!snapshot.exists) {
+        transaction.set(chatRef, {
+          'participants': [currentUserId, friendUserId],
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
     });
   }
 
-  Stream<List<ChatModel>> getMessagesPaginated({
+  void listenToMessages({
     required String currentUserId,
     required String friendUserId,
-    required int limit,
-    DocumentSnapshot? startAfter,
-  }) {
+    int limit = 20,
+  }) async {
+    await _initializeChatIfNeeded(currentUserId, friendUserId);
+
     final chatId = _generateChatId(currentUserId, friendUserId);
-    var query = _firestore
-        .collection('chats')
-        .doc(chatId)
+    final chatRef = _firestore.collection('chats').doc(chatId);
+
+    chatRef
         .collection('messages')
         .orderBy('timestamp', descending: true)
-        .limit(limit);
-
-    if (startAfter != null) {
-      query = query.startAfterDocument(startAfter);
-    }
-
-    return query.snapshots().map((snapshot) {
-      final messages =
-          snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
-      if (snapshot.docs.isNotEmpty) {
-        _lastFetchedMessage = snapshot.docs.last;
-      }
-      return messages;
+        .limit(limit)
+        .snapshots()
+        .listen((snapshot) {
+      final chatMessages = snapshot.docs
+          .map((doc) => ChatModel.fromDocument(doc))
+          .toList();
+      messages.value = chatMessages;
     });
   }
 
   Future<void> sendMessage({
-    required String senderId,
-    required String receiverId,
+    required String currentUserId,
+    required String friendUserId,
     required String message,
   }) async {
-    final chatId = _generateChatId(senderId, receiverId);
-    final chatRef = _firestore.collection('chats').doc(chatId);
+    await _initializeChatIfNeeded(currentUserId, friendUserId);
 
-    final localTimestamp = DateTime.now();
-    messages.insert(
-      0,
-      ChatModel(
-        senderId: senderId,
-        receiverId: receiverId,
-        message: message,
-        timestamp: localTimestamp,
-      ),
-    );
+    final chatId = _generateChatId(currentUserId, friendUserId);
+    final messageRef = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages');
 
-    final doc = await chatRef.get();
-    if (!doc.exists) {
-      await chatRef.set({
-        'participants': [senderId, receiverId],
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-
-    await chatRef.collection('messages').add({
-      'senderId': senderId,
-      'receiverId': receiverId,
+    final newMessage = {
+      'senderId': currentUserId,
       'message': message,
-      'timestamp': localTimestamp,
-      'serverTimestamp': FieldValue.serverTimestamp(),
-    });
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+
+    await messageRef.add(newMessage);
+  }
+
+
+  Stream<ChatPreview> getChatPreview({
+    required String currentUserId,
+    required String friendUserId,
+  }) async* {
+    final chatId = _generateChatId(currentUserId, friendUserId);
+    final messagesRef = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1);
+
+    await for (final snapshot in messagesRef.snapshots()) {
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        final message = ChatModel.fromDocument(doc);
+        yield ChatPreview(
+          message: message.message.trim().isEmpty ? 'Say Hi' : message.message,
+          timestamp: message.timestamp,
+        );
+      } else {
+        final friendQuery = await _firestore
+            .collection('friend_requests')
+            .where('status', isEqualTo: 'accepted')
+            .where('from', whereIn: [currentUserId, friendUserId])
+            .where('to', whereIn: [currentUserId, friendUserId])
+            .limit(1)
+            .get();
+
+        if (friendQuery.docs.isNotEmpty) {
+          final acceptedRequest =
+          FriendRequestModel.fromDoc(friendQuery.docs.first);
+          yield ChatPreview(
+            message: 'Say Hi',
+            timestamp: acceptedRequest.timestamp,
+          );
+        } else {
+          yield _defaultPreview();
+        }
+      }
+    }
+  }
+
+  ChatPreview _defaultPreview() {
+    return ChatPreview(
+      message: 'Say Hi',
+      timestamp: DateTime.now().subtract(const Duration(days: 365)),
+    );
   }
 
   String _generateChatId(String uid1, String uid2) {
     final sorted = [uid1, uid2]..sort();
     return '${sorted[0]}_${sorted[1]}';
-  }
-
-  Future<ChatPreview> getChatPreview({
-    required String currentUserId,
-    required String friendUserId,
-  }) async {
-    final chatId = _generateChatId(currentUserId, friendUserId);
-
-    // Get last message
-    final messageSnap = await _firestore
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .limit(1)
-        .get();
-
-    if (messageSnap.docs.isNotEmpty) {
-      final lastMessage = ChatModel.fromDocument(messageSnap.docs.first);
-      return ChatPreview(message: lastMessage.message, timestamp: lastMessage.timestamp);
-    }
-
-    // If no message, get friendship timestamp
-    final friendRequestSnap = await _firestore
-        .collection('friendRequests')
-        .where('status', isEqualTo: 'accepted')
-        .where('from', whereIn: [currentUserId, friendUserId])
-        .where('to', whereIn: [currentUserId, friendUserId])
-        .get();
-
-    if (friendRequestSnap.docs.isNotEmpty) {
-      final friendship = FriendRequestModel.fromDoc(friendRequestSnap.docs.first);
-      return ChatPreview(message: 'Say Hi', timestamp: friendship.timestamp);
-    }
-
-    return ChatPreview(message: 'Say Hi', timestamp: DateTime.now());
   }
 }

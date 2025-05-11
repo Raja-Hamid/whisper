@@ -181,8 +181,6 @@ class FriendRequestController extends GetxController {
   Future<void> cancelRequest(FriendRequestModel request) async {
     try {
       await _firestore.collection('friend_requests').doc(request.id).delete();
-
-      // Optionally remove it locally from the list
       sentRequests.removeWhere((r) => r.id == request.id);
 
       Get.snackbar(

@@ -9,6 +9,8 @@ class CustomColors {
 
   static List<Color> get primaryButtonGradient =>
       [const Color(0xffe3a59d), const Color(0xffe39f96)];
+  static List<Color> get welcomeButtonGradient =>
+      [const Color(0xfff96d41), const Color(0xfffa521b)];
   static List<Color> get secondaryGradient =>
       [secondaryColor1, secondaryColor2];
   static List<Color> get bgGradient =>

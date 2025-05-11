@@ -66,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 35.h),
               child: RoundedButton(
                 title: 'Get Started',
-                type: RoundedButtonType.primaryButtonGradient,
+                type: RoundedButtonType.welcomeButtonGradient,
                 onPressed: () {
                   Get.toNamed(AppPages.signInScreen);
                 },
