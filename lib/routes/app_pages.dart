@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:whisper/bindings/auth_binding.dart';
+import 'package:whisper/bindings/chat_binding.dart';
 import 'package:whisper/models/user_model.dart';
 import 'package:whisper/ui/screens/authorization/forgot_password_screen.dart';
 import 'package:whisper/ui/screens/authorization/sign_in_screen.dart';
@@ -24,19 +26,42 @@ class AppPages {
   static final routes = [
     GetPage(name: splashScreen, page: () => const SplashScreen()),
     GetPage(name: welcomeScreen, page: () => const WelcomeScreen()),
-    GetPage(name: signInScreen, page: () => const SignInScreen()),
-    GetPage(name: signUpScreen, page: () => const SignUpScreen()),
     GetPage(
-        name: forgotPasswordScreen, page: () => const ForgotPasswordScreen()),
-    GetPage(name: chatsListScreen, page: () => const ChatsListScreen()),
+        name: signInScreen,
+        page: () => const SignInScreen(),
+        binding: AuthBinding()),
+    GetPage(
+      name: signUpScreen,
+      page: () => const SignUpScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: forgotPasswordScreen,
+      page: () => const ForgotPasswordScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: chatsListScreen,
+      page: () => const ChatsListScreen(),
+      bindings: [AuthBinding(), ChatBinding()],
+    ),
     GetPage(
       name: chatScreen,
       page: () {
         final user = Get.arguments as UserModel;
-        return ChatScreen(receiverUser: user);
+        return ChatScreen(receiver: user);
       },
+      binding: ChatBinding(),
     ),
-    GetPage(name: profileScreen, page: () => const ProfileScreen()),
-    GetPage(name: addFriendsScreen, page: () => const AddFriendsScreen()),
+    GetPage(
+      name: profileScreen,
+      page: () => const ProfileScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: addFriendsScreen,
+      page: () => const AddFriendsScreen(),
+      bindings: [AuthBinding(), ChatBinding()],
+    ),
   ];
 }

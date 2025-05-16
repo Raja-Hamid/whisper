@@ -125,33 +125,70 @@ class FriendRequestController extends GetxController {
 
   // ACCEPT REQUEST
   Future<void> acceptRequest(FriendRequestModel request) async {
-    await _firestore.collection('friend_requests').doc(request.id).update({
-      'status': 'accepted',
-    });
+    final currentUserId = authController.user?.uid;
+    if (currentUserId == null) {
+      Get.snackbar('Error', 'User not logged in.');
+      return;
+    }
+    final participants = [request.from, request.to]..sort();
 
-    await _firestore
-        .collection('users')
-        .doc(request.from)
-        .collection('friends')
-        .doc(request.to)
-        .set({'timestamp': FieldValue.serverTimestamp()});
+    try {
+      final batch = _firestore.batch();
 
-    await _firestore
-        .collection('users')
-        .doc(request.to)
-        .collection('friends')
-        .doc(request.from)
-        .set({'timestamp': FieldValue.serverTimestamp()});
+      final requestRef = _firestore.collection('friend_requests').doc(request.id);
+      batch.update(requestRef, {'status': 'accepted'});
 
-    final user = await getUserById(request.from);
-    Get.snackbar(
-      'Request Accepted',
-      user != null
-          ? 'You are now friends with ${user.firstName}.'
-          : 'Friend request accepted.',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+      final fromFriendRef = _firestore
+          .collection('users')
+          .doc(request.from)
+          .collection('friends')
+          .doc(request.to);
+
+      final toFriendRef = _firestore
+          .collection('users')
+          .doc(request.to)
+          .collection('friends')
+          .doc(request.from);
+
+      final timestamp = FieldValue.serverTimestamp();
+
+      batch.set(fromFriendRef, {'timestamp': timestamp});
+      batch.set(toFriendRef, {'timestamp': timestamp});
+
+      await batch.commit();
+
+      final existingChat = await _firestore
+          .collection('chats')
+          .where('participants', isEqualTo: participants)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 5));
+
+      if (existingChat.docs.isEmpty) {
+        await _firestore.collection('chats').add({
+          'participants': participants,
+          'lastMessage': '',
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      final user = await getUserById(request.from);
+      Get.snackbar(
+        'Request Accepted',
+        user != null
+            ? 'You are now friends with ${user.firstName}.'
+            : 'Friend request accepted.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to accept request: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   // DECLINE REQUEST

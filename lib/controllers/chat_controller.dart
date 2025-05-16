@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:whisper/models/chat_model.dart';
@@ -7,6 +9,15 @@ import 'package:whisper/models/friend_request_model.dart';
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RxList<ChatModel> messages = <ChatModel>[].obs;
+
+  StreamSubscription<QuerySnapshot>? _chatSubscription;
+  String? _activeChatId;
+
+  @override
+  void onClose() {
+    _chatSubscription?.cancel();
+    super.onClose();
+  }
 
   Future<void> _initializeChatIfNeeded(String currentUserId, String friendUserId) async {
     final chatId = _generateChatId(currentUserId, friendUserId);
@@ -23,17 +34,23 @@ class ChatController extends GetxController {
     });
   }
 
-  void listenToMessages({
+  Future<void> listenToMessages({
     required String currentUserId,
     required String friendUserId,
     int limit = 20,
   }) async {
+    final chatId = _generateChatId(currentUserId, friendUserId);
+
+    if (_activeChatId == chatId && _chatSubscription != null) return;
+    await _chatSubscription?.cancel();
+
+    _activeChatId = chatId;
+
     await _initializeChatIfNeeded(currentUserId, friendUserId);
 
-    final chatId = _generateChatId(currentUserId, friendUserId);
     final chatRef = _firestore.collection('chats').doc(chatId);
 
-    chatRef
+    _chatSubscription = chatRef
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .limit(limit)

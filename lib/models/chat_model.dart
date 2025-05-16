@@ -5,12 +5,14 @@ class ChatModel {
   final String receiverId;
   final String message;
   final DateTime timestamp;
+  final bool isLocal;
 
   const ChatModel({
     required this.senderId,
     required this.receiverId,
     required this.message,
     required this.timestamp,
+    this.isLocal = false,
   });
 
   factory ChatModel.fromDocument(DocumentSnapshot doc) {
@@ -20,6 +22,7 @@ class ChatModel {
       receiverId: data['receiverId'] ?? '',
       message: data['message'] ?? '',
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isLocal: false,
     );
   }
 

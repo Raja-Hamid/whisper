@@ -4,71 +4,81 @@ import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/controllers/chat_controller.dart';
+import 'package:whisper/models/chat_model.dart';
 import 'package:whisper/models/user_model.dart';
 import 'package:whisper/ui/widgets/chat_bubble.dart';
 import 'package:whisper/ui/widgets/chat_input_field.dart';
 
 class ChatScreen extends StatefulWidget {
-  final UserModel receiverUser;
-  const ChatScreen({super.key, required this.receiverUser});
+  final UserModel receiver;
+  const ChatScreen({super.key, required this.receiver});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
-  final _chatController = Get.put(ChatController());
+class _ChatScreenState extends State<ChatScreen>
+    with AutomaticKeepAliveClientMixin {
+  final _chatController = Get.find<ChatController>();
   final _authController = Get.find<AuthController>();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  bool _isSending = false;
+  final bool _isSending = false;
 
   @override
   void initState() {
     super.initState();
     _chatController.listenToMessages(
       currentUserId: _authController.user!.uid,
-      friendUserId: widget.receiverUser.uid,
-    );
-  }
-
-  void _handleSend() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty || _isSending) return;
-
-    _messageController.clear();
-    FocusScope.of(context).unfocus();
-
-    setState(() => _isSending = true);
-
-    await _chatController.sendMessage(
-      currentUserId: _authController.user!.uid,
-      friendUserId: widget.receiverUser.uid,
-      message: text,
-    );
-
-
-    setState(() => _isSending = false);
-
-    _scrollController.animateTo(
-      0.0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      friendUserId: widget.receiver.uid,
     );
   }
 
   @override
   void dispose() {
-    _chatController.messages.clear();
+    _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
+  void _sendMessage() {
+    final messageText = _messageController.text.trim();
+    if (messageText.isEmpty || _isSending) return;
+
+    final currentUserId = _authController.user!.uid;
+    final friendUserId = widget.receiver.uid;
+    final timestamp = DateTime.now();
+
+    _messageController.clear();
+
+    final tempMessage = ChatModel(
+      senderId: currentUserId,
+      receiverId: friendUserId,
+      message: messageText,
+      timestamp: timestamp,
+      isLocal: true,
+    );
+    _chatController.messages.insert(0, tempMessage);
+    _scrollController.animateTo(
+      0.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+
+    _chatController.sendMessage(
+      currentUserId: currentUserId,
+      friendUserId: friendUserId,
+      message: messageText,
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
-    final currentUser = _authController.user!;
-    final receiver = widget.receiverUser;
-
+    super.build(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: true,
@@ -80,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
             CircleAvatar(
               radius: 20.r,
               child: Text(
-                receiver.firstName[0],
+                widget.receiver.firstName[0],
               ),
             ),
             SizedBox(
@@ -90,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  receiver.firstName,
+                  widget.receiver.firstName,
                   style: TextStyle(
                     color: CustomColors.white,
                     fontSize: 18.sp,
@@ -190,11 +200,13 @@ class _ChatScreenState extends State<ChatScreen> {
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final msg = messages[index];
-                          final isMe = msg.senderId == currentUser.uid;
+                          final isMe =
+                              msg.senderId == _authController.user!.uid;
                           return ChatBubble(
                             message: msg.message,
                             timestamp: msg.timestamp,
                             isMe: isMe,
+                            isLocal: msg.isLocal,
                           );
                         },
                       );
@@ -203,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 ChatInputField(
                   messageController: _messageController,
-                  onTap: _handleSend,
+                  onTap: _sendMessage,
                   isSending: _isSending,
                 ),
               ],

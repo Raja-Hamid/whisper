@@ -42,7 +42,8 @@ class ChatInputField extends StatelessWidget {
           isSending
               ? CircleAvatar(
                   radius: 25.r,
-                  backgroundColor: CustomColors.primaryColor1.withOpacity(0.7),
+                  backgroundColor:
+                      CustomColors.primaryColor1.withAlpha((0.7 * 255).round()),
                   child: SizedBox(
                     width: 22.r,
                     height: 22.r,

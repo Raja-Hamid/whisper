@@ -7,12 +7,14 @@ class ChatBubble extends StatelessWidget {
   final String message;
   final DateTime timestamp;
   final bool isMe;
+  final bool isLocal;
 
   const ChatBubble({
     super.key,
     required this.message,
     required this.timestamp,
     required this.isMe,
+    this.isLocal = false,
   });
 
   @override
@@ -51,12 +53,32 @@ class ChatBubble extends StatelessWidget {
               ),
             ),
             SizedBox(height: 6.h),
-            Text(
-              DateFormat('hh:mm a').format(timestamp),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.black54,
-                fontSize: 11.sp,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment:
+                  isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              children: [
+                Text(
+                  DateFormat('hh:mm a').format(timestamp),
+                  style: TextStyle(
+                    color: isMe ? Colors.white70 : Colors.black54,
+                    fontSize: 11.sp,
+                  ),
+                ),
+                if (isLocal && isMe) ...[
+                  SizedBox(width: 6.w),
+                  SizedBox(
+                    width: 12.r,
+                    height: 12.r,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
+                    ),
+                  ),
+                ]
+              ],
             ),
           ],
         ),
