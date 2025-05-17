@@ -24,15 +24,13 @@ class _ChatScreenState extends State<ChatScreen>
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final bool _isSending = false;
+  int _previousMessageCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _chatController.listenToMessages(
-      currentUserId: _authController.user!.uid,
-      friendUserId: widget.receiver.uid,
-    );
+    _chatController.initializeChatIfNeeded(
+        _authController.user!.uid, widget.receiver.uid);
   }
 
   @override
@@ -44,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   void _sendMessage() {
     final messageText = _messageController.text.trim();
-    if (messageText.isEmpty || _isSending) return;
+    if (messageText.isEmpty || _chatController.isSending) return;
 
     final currentUserId = _authController.user!.uid;
     final friendUserId = widget.receiver.uid;
@@ -174,25 +172,35 @@ class _ChatScreenState extends State<ChatScreen>
             child: Column(
               children: [
                 Expanded(
-                  child: Obx(
-                    () {
-                      final messages = _chatController.messages;
+                  child: StreamBuilder<List<ChatModel>>(
+                    stream: _chatController.mergedMessagesStream(
+                      currentUserId: _authController.user!.uid,
+                      friendUserId: widget.receiver.uid,
+                      limit: 20,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final messages = snapshot.data ?? [];
 
                       if (messages.isEmpty) {
                         return const Center(child: Text("No messages yet."));
                       }
 
-                      WidgetsBinding.instance.addPostFrameCallback(
-                        (_) {
-                          if (_scrollController.hasClients) {
-                            _scrollController.animateTo(
-                              0.0,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOut,
-                            );
-                          }
-                        },
-                      );
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients &&
+                            messages.length > _previousMessageCount) {
+                          _scrollController.animateTo(
+                            0.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          );
+                        }
+                        _previousMessageCount = messages.length;
+                      });
+
                       return ListView.builder(
                         physics: const BouncingScrollPhysics(),
                         controller: _scrollController,
@@ -200,8 +208,7 @@ class _ChatScreenState extends State<ChatScreen>
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final msg = messages[index];
-                          final isMe =
-                              msg.senderId == _authController.user!.uid;
+                          final isMe = msg.senderId == _authController.user!.uid;
                           return ChatBubble(
                             message: msg.message,
                             timestamp: msg.timestamp,
@@ -212,11 +219,11 @@ class _ChatScreenState extends State<ChatScreen>
                       );
                     },
                   ),
+
                 ),
                 ChatInputField(
                   messageController: _messageController,
                   onTap: _sendMessage,
-                  isSending: _isSending,
                 ),
               ],
             ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:whisper/models/chat_model.dart';
@@ -9,9 +8,15 @@ import 'package:whisper/models/friend_request_model.dart';
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RxList<ChatModel> messages = <ChatModel>[].obs;
-
   StreamSubscription<QuerySnapshot>? _chatSubscription;
-  String? _activeChatId;
+  final RxList<ChatModel> localMessages = <ChatModel>[].obs;
+  final RxList<ChatModel> remoteMessages = <ChatModel>[].obs;
+
+
+  final RxBool _isSending = false.obs;
+  bool get isSending => _isSending.value;
+  set isSending(bool val) => _isSending.value = val;
+
 
   @override
   void onClose() {
@@ -19,7 +24,8 @@ class ChatController extends GetxController {
     super.onClose();
   }
 
-  Future<void> _initializeChatIfNeeded(String currentUserId, String friendUserId) async {
+  Future<void> initializeChatIfNeeded(
+      String currentUserId, String friendUserId) async {
     final chatId = _generateChatId(currentUserId, friendUserId);
     final chatRef = _firestore.collection('chats').doc(chatId);
 
@@ -34,55 +40,131 @@ class ChatController extends GetxController {
     });
   }
 
-  Future<void> listenToMessages({
+  Stream<List<ChatModel>> mergedMessagesStream({
     required String currentUserId,
     required String friendUserId,
     int limit = 20,
-  }) async {
+  }) {
+    final controller = StreamController<List<ChatModel>>();
     final chatId = _generateChatId(currentUserId, friendUserId);
 
-    if (_activeChatId == chatId && _chatSubscription != null) return;
-    await _chatSubscription?.cancel();
+    final firestoreStream = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(limit)
+        .snapshots();
 
-    _activeChatId = chatId;
+    final firestoreSubscription = firestoreStream.listen((snapshot) {
+      remoteMessages.value = snapshot.docs
+          .map((doc) => ChatModel.fromDocument(doc))
+          .toList();
+      _mergeAndAddToController(controller);
+    });
 
-    await _initializeChatIfNeeded(currentUserId, friendUserId);
+    final localSubscription = localMessages.listen((_) {
+      _mergeAndAddToController(controller);
+    });
 
+    controller.onCancel = () {
+      firestoreSubscription.cancel();
+      localSubscription.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
+  }
+
+
+  void _mergeAndAddToController(StreamController<List<ChatModel>> controller) {
+    final allMessages = [...localMessages, ...remoteMessages];
+
+    final seen = <String, ChatModel>{};
+    for (final msg in allMessages) {
+      final key = '${msg.senderId}-${msg.message}-${msg.timestamp.millisecondsSinceEpoch ~/ 3000}';
+      if (!seen.containsKey(key)) {
+        seen[key] = msg;
+      }
+    }
+
+    final merged = seen.values.toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    controller.add(merged);
+  }
+
+
+  Stream<List<ChatModel>> listenToMessages({
+    required String currentUserId,
+    required String friendUserId,
+    int limit = 20,
+  }) {
+    final chatId = _generateChatId(currentUserId, friendUserId);
     final chatRef = _firestore.collection('chats').doc(chatId);
 
-    _chatSubscription = chatRef
+    return chatRef
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
-        .listen((snapshot) {
-      final chatMessages = snapshot.docs
-          .map((doc) => ChatModel.fromDocument(doc))
-          .toList();
-      messages.value = chatMessages;
+        .map((snapshot) {
+      final remote = snapshot.docs.map((doc) => ChatModel.fromDocument(doc)).toList();
+
+      for (var remoteMsg in remote) {
+        localMessages.removeWhere((local) =>
+        local.message == remoteMsg.message &&
+            local.senderId == remoteMsg.senderId &&
+            local.timestamp.difference(remoteMsg.timestamp).inSeconds.abs() < 3
+        );
+      }
+
+      remoteMessages.value = remote;
+      final combined = [...localMessages, ...remote];
+
+      messages.value = combined;
+      return combined;
     });
   }
+
 
   Future<void> sendMessage({
     required String currentUserId,
     required String friendUserId,
     required String message,
   }) async {
-    await _initializeChatIfNeeded(currentUserId, friendUserId);
+    isSending = true;
 
     final chatId = _generateChatId(currentUserId, friendUserId);
-    final messageRef = _firestore
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages');
+    final messageRef =
+    _firestore.collection('chats').doc(chatId).collection('messages');
 
-    final newMessage = {
+    final timestamp = DateTime.now();
+    final tempMessage = ChatModel(
+      senderId: currentUserId,
+      receiverId: friendUserId,
+      message: message,
+      timestamp: timestamp,
+      isLocal: true,
+    );
+    localMessages.insert(0, tempMessage);
+
+    final newMessageData = {
       'senderId': currentUserId,
+      'receiverId': friendUserId,
       'message': message,
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': Timestamp.fromDate(timestamp),
     };
 
-    await messageRef.add(newMessage);
+    try {
+      await messageRef.add(newMessageData);
+      localMessages.removeWhere((msg) =>
+      msg.senderId == tempMessage.senderId &&
+          msg.message == tempMessage.message &&
+          (msg.timestamp.difference(tempMessage.timestamp).inSeconds).abs() < 3);
+    } finally {
+      isSending = false;
+    }
   }
 
 
@@ -117,7 +199,7 @@ class ChatController extends GetxController {
 
         if (friendQuery.docs.isNotEmpty) {
           final acceptedRequest =
-          FriendRequestModel.fromDoc(friendQuery.docs.first);
+              FriendRequestModel.fromDoc(friendQuery.docs.first);
           yield ChatPreview(
             message: 'Say Hi',
             timestamp: acceptedRequest.timestamp,
