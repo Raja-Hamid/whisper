@@ -11,8 +11,7 @@ class FriendRequestController extends GetxController {
   final authController = Get.find<AuthController>();
 
   final RxList<FriendRequestModel> sentRequests = <FriendRequestModel>[].obs;
-  final RxList<FriendRequestModel> receivedRequests =
-      <FriendRequestModel>[].obs;
+  final RxList<FriendRequestModel> receivedRequests = <FriendRequestModel>[].obs;
 
   late StreamSubscription<QuerySnapshot> _sentRequestSub;
   late StreamSubscription<QuerySnapshot> _receivedRequestSub;
@@ -25,15 +24,12 @@ class FriendRequestController extends GetxController {
     super.onClose();
   }
 
-  // SEND FRIEND REQUEST
   Future<void> sendRequest(String toUserId) async {
     final currentUserId = authController.user?.uid;
-
     if (currentUserId == null) {
       Get.snackbar('Error', 'User not logged in.');
       return;
     }
-
     if (currentUserId == toUserId) {
       Get.snackbar(
         'Invalid Action',
@@ -44,25 +40,17 @@ class FriendRequestController extends GetxController {
       );
       return;
     }
-
-    final existingRequest = await _firestore
-        .collection('friend_requests')
-        .where('from', isEqualTo: currentUserId)
-        .where('to', isEqualTo: toUserId)
-        .where('status', isEqualTo: 'pending')
+    final friendDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('friends')
+        .doc(toUserId)
         .get();
 
-    final reverseRequest = await _firestore
-        .collection('friend_requests')
-        .where('from', isEqualTo: toUserId)
-        .where('to', isEqualTo: currentUserId)
-        .where('status', isEqualTo: 'pending')
-        .get();
-
-    if (existingRequest.docs.isNotEmpty) {
+    if (friendDoc.exists) {
       Get.snackbar(
-        'Already Sent',
-        'You already sent a request to this user.',
+        'Already Friends',
+        'You are already friends with this user.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.blue,
         colorText: Colors.white,
@@ -70,14 +58,41 @@ class FriendRequestController extends GetxController {
       return;
     }
 
-    if (reverseRequest.docs.isNotEmpty) {
-      Get.snackbar(
-        'Request Already Received',
-        'This user has already sent you a friend request. Check your received requests.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.purple,
-        colorText: Colors.white,
-      );
+    final participants = [currentUserId, toUserId]..sort();
+
+    final pendingRequestsQuery = await _firestore
+        .collection('friend_requests')
+        .where('status', isEqualTo: 'pending')
+        .where('participants', arrayContainsAny: participants)
+        .get();
+
+    final existingRequest = pendingRequestsQuery.docs.where((doc) {
+      final docParticipants = List<String>.from(doc['participants'] ?? []);
+      return docParticipants.length == 2 &&
+          docParticipants[0] == participants[0] &&
+          docParticipants[1] == participants[1];
+    }).toList();
+
+    if (existingRequest.isNotEmpty) {
+      final doc = existingRequest.first;
+      final fromId = doc['from'];
+      if (fromId == currentUserId) {
+        Get.snackbar(
+          'Already Sent',
+          'You already sent a friend request to this user.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          'Request Already Received',
+          'This user has already sent you a friend request. Check your received requests.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.purple,
+          colorText: Colors.white,
+        );
+      }
       return;
     }
 
@@ -86,6 +101,7 @@ class FriendRequestController extends GetxController {
       'to': toUserId,
       'status': 'pending',
       'timestamp': FieldValue.serverTimestamp(),
+      'participants': participants,
     });
 
     Get.snackbar(
@@ -97,7 +113,7 @@ class FriendRequestController extends GetxController {
     );
   }
 
-  // FETCH REQUESTS
+
   void fetchRequests() {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) return;
@@ -123,7 +139,6 @@ class FriendRequestController extends GetxController {
     });
   }
 
-  // ACCEPT REQUEST
   Future<void> acceptRequest(FriendRequestModel request) async {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) {
@@ -151,7 +166,6 @@ class FriendRequestController extends GetxController {
           .doc(request.from);
 
       final timestamp = FieldValue.serverTimestamp();
-
       batch.set(fromFriendRef, {'timestamp': timestamp});
       batch.set(toFriendRef, {'timestamp': timestamp});
 
@@ -191,30 +205,22 @@ class FriendRequestController extends GetxController {
     }
   }
 
-  // DECLINE REQUEST
   Future<void> declineRequest(FriendRequestModel request) async {
-    await _firestore
-        .collection('friend_requests')
-        .doc(request.id)
-        .update({'status': 'declined'});
+    try {
+      await _firestore
+          .collection('friend_requests')
+          .doc(request.id)
+          .update({'status': 'declined'});
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to decline request.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
-  // FETCH USER DATA
-  Future<UserModel?> getUserById(String uid) async {
-    if (_userCache.containsKey(uid)) {
-      return _userCache[uid];
-    }
-
-    final doc = await _firestore.collection('users').doc(uid).get();
-    if (doc.exists) {
-      final user = UserModel.fromDocument(doc);
-      _userCache[uid] = user;
-      return user;
-    }
-    return null;
-  }
-
-  // CANCEL SENT REQUEST
   Future<void> cancelRequest(FriendRequestModel request) async {
     try {
       await _firestore.collection('friend_requests').doc(request.id).delete();
@@ -238,7 +244,20 @@ class FriendRequestController extends GetxController {
     }
   }
 
-  // FRIENDS LIST
+  Future<UserModel?> getUserById(String uid) async {
+    if (_userCache.containsKey(uid)) {
+      return _userCache[uid];
+    }
+
+    final doc = await _firestore.collection('users').doc(uid).get();
+    if (doc.exists) {
+      final user = UserModel.fromDocument(doc);
+      _userCache[uid] = user;
+      return user;
+    }
+    return null;
+  }
+
   Stream<List<UserModel>> getFriendsStream() {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) return Stream.value([]);
