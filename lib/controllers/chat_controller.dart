@@ -222,12 +222,6 @@ class ChatController extends GetxController {
     }
   }
 
-
-
-
-
-
-
   Stream<ChatPreview> getChatPreview({
     required String currentUserId,
     required String friendUserId,
