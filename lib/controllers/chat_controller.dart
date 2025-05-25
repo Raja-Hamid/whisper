@@ -167,6 +167,66 @@ class ChatController extends GetxController {
     }
   }
 
+  Future<void> deleteMessage({
+    required String currentUserId,
+    required String friendUserId,
+    required String messageText,
+  }) async {
+    try {
+      final chatId = _generateChatId(currentUserId, friendUserId);
+      final querySnapshot = await _firestore
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .where('message', isEqualTo: messageText)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        await querySnapshot.docs.first.reference.delete();
+        print('Message deleted successfully.');
+      } else {
+        print('Message not found.');
+      }
+    } catch (e) {
+      print('Error deleting message: $e');
+    }
+  }
+  Future<void> editMessage({
+    required String oldMessage,
+    required String newMessage,
+    required String senderId,
+    required String recieverId,
+  }) async {
+    try {
+      final chatId = _generateChatId(senderId, recieverId);
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .where('senderId', isEqualTo: senderId)
+          .where('receiverId', isEqualTo: recieverId)
+          .where('message', isEqualTo: oldMessage)
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.update({
+          'message': newMessage,
+        });
+      }
+
+      print('Message(s) updated successfully');
+    } catch (e) {
+      print('Error updating message: $e');
+    }
+  }
+
+
+
+
+
+
 
   Stream<ChatPreview> getChatPreview({
     required String currentUserId,
