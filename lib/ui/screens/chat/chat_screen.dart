@@ -213,7 +213,7 @@ class _ChatScreenState extends State<ChatScreen>
                             message: msg.message,
                             timestamp: msg.timestamp,
                             isMe: isMe,
-                            isLocal: msg.isLocal,
+                            isLocal: msg.isLocal, messageModel: msg,
                           );
                         },
                       );
