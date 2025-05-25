@@ -88,10 +88,9 @@ class ChatBubble extends StatelessWidget {
 
     if (isMe) {
       bubble = GestureDetector(
-        onTap: () {
+        onLongPress: () {
           showModalBottomSheet(context: context, builder: (context)=>
               MessageOptionsSheet(message: messageModel
-
               ));
         },
         child: bubble,
