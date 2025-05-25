@@ -19,8 +19,8 @@ class MessageOptionsSheet extends StatelessWidget {
       child: Wrap(
         children: [
           ListTile(
-            leading: Icon(Icons.edit),
-            title: Text('Edit'),
+            leading: Icon(Icons.edit,color: CustomColors.primaryColor1,),
+            title: Text('Edit',),
             onTap: () {
               Navigator.pop(context);
               showModalBottomSheet(
@@ -31,7 +31,7 @@ class MessageOptionsSheet extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.delete),
+            leading: Icon(Icons.delete,color: Colors.red[200],),
             title: Text('Delete'),
             onTap: () async {
               final controller = Get.find<ChatController>();
