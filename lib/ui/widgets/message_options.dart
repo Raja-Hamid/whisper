@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:whisper/controllers/chat_controller.dart';
 import 'package:whisper/models/chat_model.dart';
 
+import '../../constants/colors.dart';
+
 class MessageOptionsSheet extends StatelessWidget {
   final ChatModel message;
 
@@ -66,13 +68,35 @@ Widget renameMessage(BuildContext context, ChatModel message) {
               children: [
                 Expanded(
                   child: TextField(
+                    cursorColor: CustomColors.primaryColor1,
                     controller: _controller,
                     autofocus: true,
                     decoration: InputDecoration(
-                      hintText: 'Enter new message',
-                      border: OutlineInputBorder(),
+                      hintText: 'Enter new message..',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: CustomColors.primaryColor1,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: CustomColors.primaryColor1,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: CustomColors.primaryColor1,
+                          width: 3,
+                        ),
+                      ),
                     ),
                   ),
+
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -86,8 +110,20 @@ Widget renameMessage(BuildContext context, ChatModel message) {
                     );
                     Navigator.pop(innerContext);
                   },
-                  child: Text('Rename'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: CustomColors.primaryColor1,
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(12),
+                    minimumSize: const Size(48, 48),
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
+
+
               ],
             ),
             const SizedBox(height: 16),
