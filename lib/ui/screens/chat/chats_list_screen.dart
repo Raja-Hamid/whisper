@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/controllers/chat_controller.dart';
@@ -28,7 +29,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
     final difference = now.difference(timestamp);
 
     if (difference.inDays == 0) {
-      return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+      return DateFormat('hh:mm a').format(timestamp);
     } else if (difference.inDays == 1) {
       return 'Yesterday';
     } else {

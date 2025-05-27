@@ -11,6 +11,7 @@ import 'package:whisper/ui/widgets/chat_input_field.dart';
 
 class ChatScreen extends StatefulWidget {
   final UserModel receiver;
+
   const ChatScreen({super.key, required this.receiver});
 
   @override
@@ -30,7 +31,9 @@ class _ChatScreenState extends State<ChatScreen>
   void initState() {
     super.initState();
     _chatController.initializeChatIfNeeded(
-        _authController.user!.uid, widget.receiver.uid);
+      _authController.user!.uid,
+      widget.receiver.uid,
+    );
   }
 
   @override
@@ -51,13 +54,16 @@ class _ChatScreenState extends State<ChatScreen>
     _messageController.clear();
 
     final tempMessage = ChatModel(
+      id: 'temp-${timestamp.millisecondsSinceEpoch}',
       senderId: currentUserId,
       receiverId: friendUserId,
       message: messageText,
       timestamp: timestamp,
       isLocal: true,
     );
+
     _chatController.messages.insert(0, tempMessage);
+
     _scrollController.animateTo(
       0.0,
       duration: const Duration(milliseconds: 300),
@@ -77,6 +83,7 @@ class _ChatScreenState extends State<ChatScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: true,
@@ -87,13 +94,9 @@ class _ChatScreenState extends State<ChatScreen>
           children: [
             CircleAvatar(
               radius: 20.r,
-              child: Text(
-                widget.receiver.firstName[0],
-              ),
+              child: Text(widget.receiver.firstName[0]),
             ),
-            SizedBox(
-              width: 10.w,
-            ),
+            SizedBox(width: 10.w),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -117,24 +120,14 @@ class _ChatScreenState extends State<ChatScreen>
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(
-              Icons.videocam,
-              color: CustomColors.white,
-            ),
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.videocam, color: CustomColors.white),
           ),
           Padding(
             padding: EdgeInsets.only(right: 10.w),
             child: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: Icon(
-                Icons.call,
-                color: CustomColors.white,
-              ),
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(Icons.call, color: CustomColors.white),
             ),
           ),
         ],
@@ -208,18 +201,25 @@ class _ChatScreenState extends State<ChatScreen>
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final msg = messages[index];
-                          final isMe = msg.senderId == _authController.user!.uid;
+                          final isMe =
+                              msg.senderId == _authController.user!.uid;
+
                           return ChatBubble(
                             message: msg.message,
                             timestamp: msg.timestamp,
                             isMe: isMe,
-                            isLocal: msg.isLocal, messageModel: msg,
+                            isLocal: msg.isLocal,
+                            onEdit: isMe && msg.id != null
+                                ? () => _showEditDialog(msg)
+                                : null,
+                            onDelete: isMe && msg.id != null
+                                ? () => _confirmDelete(msg)
+                                : null,
                           );
                         },
                       );
                     },
                   ),
-
                 ),
                 ChatInputField(
                   messageController: _messageController,
@@ -229,6 +229,72 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showEditDialog(ChatModel msg) {
+    final TextEditingController editController =
+        TextEditingController(text: msg.message);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Message'),
+        content: TextField(
+          controller: editController,
+          decoration: const InputDecoration(hintText: 'Enter new message'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newText = editController.text.trim();
+              if (newText.isNotEmpty && newText != msg.message) {
+                _chatController.editMessage(
+                  currentUserId: _authController.user!.uid,
+                  friendUserId: widget.receiver.uid,
+                  messageId: msg.id!,
+                  newMessage: newText,
+                );
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(ChatModel msg) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Message'),
+        content: const Text('Are you sure you want to delete this message?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _chatController.deleteMessage(
+                currentUserId: _authController.user!.uid,
+                friendUserId: widget.receiver.uid,
+                messageId: msg.id!,
+              );
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

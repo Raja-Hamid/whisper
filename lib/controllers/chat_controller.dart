@@ -12,11 +12,9 @@ class ChatController extends GetxController {
   final RxList<ChatModel> localMessages = <ChatModel>[].obs;
   final RxList<ChatModel> remoteMessages = <ChatModel>[].obs;
 
-
   final RxBool _isSending = false.obs;
   bool get isSending => _isSending.value;
   set isSending(bool val) => _isSending.value = val;
-
 
   @override
   void onClose() {
@@ -94,7 +92,6 @@ class ChatController extends GetxController {
     controller.add(merged);
   }
 
-
   Stream<List<ChatModel>> listenToMessages({
     required String currentUserId,
     required String friendUserId,
@@ -127,7 +124,6 @@ class ChatController extends GetxController {
     });
   }
 
-
   Future<void> sendMessage({
     required String currentUserId,
     required String friendUserId,
@@ -136,17 +132,22 @@ class ChatController extends GetxController {
     isSending = true;
 
     final chatId = _generateChatId(currentUserId, friendUserId);
-    final messageRef =
-    _firestore.collection('chats').doc(chatId).collection('messages');
+    final messageRef = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages');
 
     final timestamp = DateTime.now();
+
     final tempMessage = ChatModel(
+      id: null,
       senderId: currentUserId,
       receiverId: friendUserId,
       message: message,
       timestamp: timestamp,
       isLocal: true,
     );
+
     localMessages.insert(0, tempMessage);
 
     final newMessageData = {
@@ -158,6 +159,7 @@ class ChatController extends GetxController {
 
     try {
       await messageRef.add(newMessageData);
+
       localMessages.removeWhere((msg) =>
       msg.senderId == tempMessage.senderId &&
           msg.message == tempMessage.message &&
@@ -167,58 +169,42 @@ class ChatController extends GetxController {
     }
   }
 
+
   Future<void> deleteMessage({
     required String currentUserId,
     required String friendUserId,
-    required String messageText,
+    required String messageId,
   }) async {
     try {
       final chatId = _generateChatId(currentUserId, friendUserId);
-      final querySnapshot = await _firestore
+      final messageDoc = _firestore
           .collection('chats')
           .doc(chatId)
           .collection('messages')
-          .where('message', isEqualTo: messageText)
-          .limit(1)
-          .get();
+          .doc(messageId);
 
-      if (querySnapshot.docs.isNotEmpty) {
-        await querySnapshot.docs.first.reference.delete();
-        print('Message deleted successfully.');
-      } else {
-        print('Message not found.');
-      }
+      await messageDoc.delete();
     } catch (e) {
-      print('Error deleting message: $e');
+      Get.snackbar('Error', 'Could not delete the message.');
     }
   }
+
   Future<void> editMessage({
-    required String oldMessage,
+    required String currentUserId,
+    required String friendUserId,
+    required String messageId,
     required String newMessage,
-    required String senderId,
-    required String recieverId,
   }) async {
     try {
-      final chatId = _generateChatId(senderId, recieverId);
-
-      final querySnapshot = await FirebaseFirestore.instance
+      final chatId = _generateChatId(currentUserId, friendUserId);
+      final messageDoc = _firestore
           .collection('chats')
           .doc(chatId)
           .collection('messages')
-          .where('senderId', isEqualTo: senderId)
-          .where('receiverId', isEqualTo: recieverId)
-          .where('message', isEqualTo: oldMessage)
-          .get();
-
-      for (var doc in querySnapshot.docs) {
-        await doc.reference.update({
-          'message': newMessage,
-        });
-      }
-
-      print('Message(s) updated successfully');
+          .doc(messageId);
+      await messageDoc.update({'message': newMessage});
     } catch (e) {
-      print('Error updating message: $e');
+      Get.snackbar('Error', 'Could not edit the message.');
     }
   }
 

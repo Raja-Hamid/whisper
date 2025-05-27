@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,14 +14,14 @@ class FriendRequestController extends GetxController {
   final RxList<FriendRequestModel> sentRequests = <FriendRequestModel>[].obs;
   final RxList<FriendRequestModel> receivedRequests = <FriendRequestModel>[].obs;
 
-  late StreamSubscription<QuerySnapshot> _sentRequestSub;
-  late StreamSubscription<QuerySnapshot> _receivedRequestSub;
+  StreamSubscription<QuerySnapshot>? _sentRequestSub;
+  StreamSubscription<QuerySnapshot>? _receivedRequestSub;
   final Map<String, UserModel> _userCache = {};
 
   @override
   void onClose() {
-    _sentRequestSub.cancel();
-    _receivedRequestSub.cancel();
+    _sentRequestSub?.cancel();
+    _receivedRequestSub?.cancel();
     super.onClose();
   }
 
@@ -30,73 +31,63 @@ class FriendRequestController extends GetxController {
       Get.snackbar('Error', 'User not logged in.');
       return;
     }
+
     if (currentUserId == toUserId) {
-      Get.snackbar(
-        'Invalid Action',
-        'You cannot send a friend request to yourself.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Invalid Action', 'You cannot send a friend request to yourself.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white);
       return;
     }
-    final friendDoc = await _firestore
+
+    final userFriendsRef = _firestore
         .collection('users')
         .doc(currentUserId)
         .collection('friends')
-        .doc(toUserId)
-        .get();
+        .doc(toUserId);
 
+    final friendDoc = await userFriendsRef.get();
     if (friendDoc.exists) {
-      Get.snackbar(
-        'Already Friends',
-        'You are already friends with this user.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Already Friends', 'You are already friends with this user.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white);
       return;
     }
 
     final participants = [currentUserId, toUserId]..sort();
+    final requestId = '${participants[0]}_${participants[1]}';
 
-    final pendingRequestsQuery = await _firestore
-        .collection('friend_requests')
-        .where('status', isEqualTo: 'pending')
-        .where('participants', arrayContainsAny: participants)
-        .get();
+    final requestDoc = await _firestore.collection('friend_requests').doc(requestId).get();
 
-    final existingRequest = pendingRequestsQuery.docs.where((doc) {
-      final docParticipants = List<String>.from(doc['participants'] ?? []);
-      return docParticipants.length == 2 &&
-          docParticipants[0] == participants[0] &&
-          docParticipants[1] == participants[1];
-    }).toList();
+    if (requestDoc.exists) {
+      final data = requestDoc.data();
+      final status = data?['status'] ?? 'pending';
+      final fromId = data?['from'];
 
-    if (existingRequest.isNotEmpty) {
-      final doc = existingRequest.first;
-      final fromId = doc['from'];
-      if (fromId == currentUserId) {
-        Get.snackbar(
-          'Already Sent',
-          'You already sent a friend request to this user.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.blue,
-          colorText: Colors.white,
-        );
-      } else {
-        Get.snackbar(
-          'Request Already Received',
-          'This user has already sent you a friend request. Check your received requests.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.purple,
-          colorText: Colors.white,
-        );
+      if (status == 'pending') {
+        if (fromId == currentUserId) {
+          Get.snackbar('Already Sent', 'You already sent a request.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.blue,
+              colorText: Colors.white);
+        } else {
+          Get.snackbar('Request Already Received', 'Check your received requests.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.purple,
+              colorText: Colors.white);
+        }
+        return;
+      } else if (status == 'accepted') {
+        Get.snackbar('Already Friends', 'You are already friends with this user.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.blue,
+            colorText: Colors.white);
+        return;
       }
-      return;
     }
 
-    await _firestore.collection('friend_requests').add({
+    await _firestore.collection('friend_requests').doc(requestId).set({
       'from': currentUserId,
       'to': toUserId,
       'status': 'pending',
@@ -104,19 +95,18 @@ class FriendRequestController extends GetxController {
       'participants': participants,
     });
 
-    Get.snackbar(
-      'Request Sent',
-      'Friend request sent successfully.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    Get.snackbar('Request Sent', 'Friend request sent successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white);
   }
-
 
   void fetchRequests() {
     final currentUserId = authController.user?.uid;
     if (currentUserId == null) return;
+
+    _sentRequestSub?.cancel();
+    _receivedRequestSub?.cancel();
 
     _sentRequestSub = _firestore
         .collection('friend_requests')
@@ -124,8 +114,9 @@ class FriendRequestController extends GetxController {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .listen((snapshot) {
-      sentRequests.value =
-          snapshot.docs.map((e) => FriendRequestModel.fromDoc(e)).toList();
+      sentRequests.value = snapshot.docs
+          .map((doc) => FriendRequestModel.fromDoc(doc))
+          .toList();
     });
 
     _receivedRequestSub = _firestore
@@ -134,8 +125,9 @@ class FriendRequestController extends GetxController {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .listen((snapshot) {
-      receivedRequests.value =
-          snapshot.docs.map((e) => FriendRequestModel.fromDoc(e)).toList();
+      receivedRequests.value = snapshot.docs
+          .map((doc) => FriendRequestModel.fromDoc(doc))
+          .toList();
     });
   }
 
@@ -145,11 +137,12 @@ class FriendRequestController extends GetxController {
       Get.snackbar('Error', 'User not logged in.');
       return;
     }
-    final participants = [request.from, request.to]..sort();
 
     try {
-      final batch = _firestore.batch();
+      final participants = [request.from, request.to]..sort();
+      final timestamp = FieldValue.serverTimestamp();
 
+      final batch = _firestore.batch();
       final requestRef = _firestore.collection('friend_requests').doc(request.id);
       batch.update(requestRef, {'status': 'accepted'});
 
@@ -158,27 +151,24 @@ class FriendRequestController extends GetxController {
           .doc(request.from)
           .collection('friends')
           .doc(request.to);
-
       final toFriendRef = _firestore
           .collection('users')
           .doc(request.to)
           .collection('friends')
           .doc(request.from);
 
-      final timestamp = FieldValue.serverTimestamp();
       batch.set(fromFriendRef, {'timestamp': timestamp});
       batch.set(toFriendRef, {'timestamp': timestamp});
 
       await batch.commit();
 
-      final existingChat = await _firestore
+      final chatQuery = await _firestore
           .collection('chats')
           .where('participants', isEqualTo: participants)
           .limit(1)
-          .get()
-          .timeout(const Duration(seconds: 5));
+          .get();
 
-      if (existingChat.docs.isEmpty) {
+      if (chatQuery.docs.isEmpty) {
         await _firestore.collection('chats').add({
           'participants': participants,
           'lastMessage': '',
@@ -196,28 +186,25 @@ class FriendRequestController extends GetxController {
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to accept request: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Failed to accept request: ${e.toString()}',
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
     }
   }
 
   Future<void> declineRequest(FriendRequestModel request) async {
     try {
-      await _firestore
-          .collection('friend_requests')
-          .doc(request.id)
-          .update({'status': 'declined'});
+      await _firestore.collection('friend_requests').doc(request.id).update({'status': 'declined'});
+      receivedRequests.removeWhere((r) => r.id == request.id);
+
+      Get.snackbar('Request Declined', 'Friend request has been declined.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.grey,
+          colorText: Colors.white);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to decline request.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Failed to decline request.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
     }
   }
 
@@ -226,35 +213,30 @@ class FriendRequestController extends GetxController {
       await _firestore.collection('friend_requests').doc(request.id).delete();
       sentRequests.removeWhere((r) => r.id == request.id);
 
-      Get.snackbar(
-        'Request Cancelled',
-        'Friend request has been cancelled.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Request Cancelled', 'Friend request has been cancelled.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to cancel the request.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Failed to cancel the request.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
     }
   }
 
   Future<UserModel?> getUserById(String uid) async {
-    if (_userCache.containsKey(uid)) {
-      return _userCache[uid];
-    }
+    if (_userCache.containsKey(uid)) return _userCache[uid];
 
-    final doc = await _firestore.collection('users').doc(uid).get();
-    if (doc.exists) {
-      final user = UserModel.fromDocument(doc);
-      _userCache[uid] = user;
-      return user;
-    }
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final user = UserModel.fromDocument(doc);
+        _userCache[uid] = user;
+        return user;
+      }
+    } catch (_) {}
+
     return null;
   }
 
@@ -269,16 +251,14 @@ class FriendRequestController extends GetxController {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
-      final users = <UserModel>[];
-
-      for (var doc in snapshot.docs) {
+      final futures = snapshot.docs.map((doc) async {
         final userId = doc.id;
         final userDoc = await _firestore.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          users.add(UserModel.fromDocument(userDoc));
-        }
-      }
-      return users;
+        return userDoc.exists ? UserModel.fromDocument(userDoc) : null;
+      });
+
+      final users = await Future.wait(futures);
+      return users.whereType<UserModel>().toList();
     });
   }
 }

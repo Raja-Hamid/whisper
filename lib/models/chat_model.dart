@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatModel {
+  final String? id;
   final String senderId;
   final String receiverId;
   final String message;
@@ -8,6 +9,7 @@ class ChatModel {
   final bool isLocal;
 
   const ChatModel({
+    required this.id,
     required this.senderId,
     required this.receiverId,
     required this.message,
@@ -18,6 +20,7 @@ class ChatModel {
   factory ChatModel.fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ChatModel(
+      id: doc.id,
       senderId: data['senderId'] ?? '',
       receiverId: data['receiverId'] ?? '',
       message: data['message'] ?? '',
