@@ -8,6 +8,8 @@ import 'package:whisper/models/chat_model.dart';
 import 'package:whisper/models/user_model.dart';
 import 'package:whisper/ui/widgets/chat_bubble.dart';
 import 'package:whisper/ui/widgets/chat_input_field.dart';
+import 'package:whisper/ui/widgets/delete_message_dialog.dart';
+import 'package:whisper/ui/widgets/edit_message_dialog.dart';
 
 class ChatScreen extends StatefulWidget {
   final UserModel receiver;
@@ -203,7 +205,6 @@ class _ChatScreenState extends State<ChatScreen>
                           final msg = messages[index];
                           final isMe =
                               msg.senderId == _authController.user!.uid;
-
                           return ChatBubble(
                             message: msg.message,
                             timestamp: msg.timestamp,
@@ -234,39 +235,18 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void _showEditDialog(ChatModel msg) {
-    final TextEditingController editController =
-        TextEditingController(text: msg.message);
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Message'),
-        content: TextField(
-          controller: editController,
-          decoration: const InputDecoration(hintText: 'Enter new message'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final newText = editController.text.trim();
-              if (newText.isNotEmpty && newText != msg.message) {
-                _chatController.editMessage(
-                  currentUserId: _authController.user!.uid,
-                  friendUserId: widget.receiver.uid,
-                  messageId: msg.id!,
-                  newMessage: newText,
-                );
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (_) => EditMessageDialog(
+        initialText: msg.message,
+        onSave: (newText) {
+          _chatController.editMessage(
+            currentUserId: _authController.user!.uid,
+            friendUserId: widget.receiver.uid,
+            messageId: msg.id!,
+            newMessage: newText,
+          );
+        },
       ),
     );
   }
@@ -274,27 +254,14 @@ class _ChatScreenState extends State<ChatScreen>
   void _confirmDelete(ChatModel msg) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Message'),
-        content: const Text('Are you sure you want to delete this message?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _chatController.deleteMessage(
-                currentUserId: _authController.user!.uid,
-                friendUserId: widget.receiver.uid,
-                messageId: msg.id!,
-              );
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
+      builder: (_) => DeleteConfirmationDialog(
+        onConfirm: () {
+          _chatController.deleteMessage(
+            currentUserId: _authController.user!.uid,
+            friendUserId: widget.receiver.uid,
+            messageId: msg.id!,
+          );
+        },
       ),
     );
   }

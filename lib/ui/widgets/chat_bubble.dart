@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:intl/intl.dart';
+import 'package:whisper/ui/widgets/message_options_sheet.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -27,30 +28,9 @@ class ChatBubble extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (onEdit != null)
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onEdit?.call();
-                },
-              ),
-            if (onDelete != null)
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('Delete'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onDelete?.call();
-                },
-              ),
-          ],
-        ),
+      builder: (_) => MessageOptionsSheet(
+        onEdit: onEdit,
+        onDelete: onDelete,
       ),
     );
   }
