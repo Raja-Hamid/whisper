@@ -6,6 +6,7 @@ import 'package:whisper/constants/validators.dart';
 import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/routes/app_pages.dart';
 import 'package:whisper/ui/widgets/authentication_footer.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 import 'package:whisper/ui/widgets/custom_text_field.dart';
 import 'package:whisper/ui/widgets/rounded_button.dart';
 import 'package:whisper/ui/widgets/social_bar.dart';
@@ -33,16 +34,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: SafeArea(
           child: Container(
             margin: EdgeInsets.only(top: 50.h),
@@ -53,7 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.white.withAlpha((0.5 * 255).round()),
+                  Colors.white.withAlpha((0.25 * 255).round()),
                 ],
                 stops: const [0, 0],
               ),
@@ -210,7 +202,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               );
                             }
                           },
-                          type: RoundedButtonType.primaryButtonGradient,
                         ),
                         SizedBox(
                           height: 25.h,

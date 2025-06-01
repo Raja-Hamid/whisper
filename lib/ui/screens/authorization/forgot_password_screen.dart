@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:whisper/constants/colors.dart';
 import 'package:whisper/constants/validators.dart';
 import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/routes/app_pages.dart';
 import 'package:whisper/ui/widgets/authentication_footer.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 import 'package:whisper/ui/widgets/custom_text_field.dart';
 import 'package:whisper/ui/widgets/rounded_button.dart';
 
@@ -25,16 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: Container(
           margin: EdgeInsets.only(top: 150.h),
           padding: EdgeInsets.symmetric(horizontal: 25.w),
@@ -44,7 +35,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.white.withAlpha((0.5 * 255).round()),
+                Colors.white.withAlpha((0.25 * 255).round()),
               ],
               stops: const [0, 0],
             ),
@@ -96,8 +87,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           email: _emailController.text.trim());
                     }
                   },
-                  type: RoundedButtonType.primaryButtonGradient,
                 ),
+                SizedBox(height: 20.h,),
                 AuthenticationFooter(
                   leadingText: 'Don\'t have an account? ',
                   actionText: 'Sign Up',

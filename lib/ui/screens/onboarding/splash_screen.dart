@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/routes/app_pages.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,7 +14,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  @override
   @override
   void initState() {
     super.initState();
@@ -28,21 +28,11 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,

@@ -15,6 +15,8 @@ class CustomColors {
       [secondaryColor1, secondaryColor2];
   static List<Color> get bgGradient =>
       [const Color(0xff003f5c), const Color(0xffFF6E40)];
+  static List<Color> get bgGradient2 =>
+      [const Color(0xff0e2829),const Color(0xff0e2829), const Color(0xff0e2829)];
 
   static Color get black => const Color(0xff1D1617);
   static Color get white => Colors.white;

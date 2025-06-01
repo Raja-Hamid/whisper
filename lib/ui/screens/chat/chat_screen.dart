@@ -6,6 +6,7 @@ import 'package:whisper/controllers/auth_controller.dart';
 import 'package:whisper/controllers/chat_controller.dart';
 import 'package:whisper/models/chat_model.dart';
 import 'package:whisper/models/user_model.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 import 'package:whisper/ui/widgets/chat_bubble.dart';
 import 'package:whisper/ui/widgets/chat_input_field.dart';
 import 'package:whisper/ui/widgets/delete_message_dialog.dart';
@@ -136,16 +137,7 @@ class _ChatScreenState extends State<ChatScreen>
         toolbarHeight: kToolbarHeight,
         iconTheme: IconThemeData(color: CustomColors.white, size: 25.sp),
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: SafeArea(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 15.w),

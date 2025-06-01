@@ -9,6 +9,7 @@ import 'package:whisper/controllers/friend_request_controller.dart';
 import 'package:whisper/models/chat_preview_model.dart';
 import 'package:whisper/routes/app_pages.dart';
 import 'package:whisper/ui/screens/chat/add_friends_screen.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 import 'package:whisper/ui/widgets/chat_tile.dart';
 
 class ChatsListScreen extends StatefulWidget {
@@ -80,16 +81,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         ],
         toolbarHeight: kToolbarHeight,
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: SafeArea(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
@@ -182,7 +174,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xffe39f96),
+        backgroundColor: Colors.indigoAccent,
         shape: const CircleBorder(),
         child: const Icon(
           Icons.add,

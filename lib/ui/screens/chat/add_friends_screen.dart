@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:whisper/controllers/friend_request_controller.dart';
 import 'package:whisper/models/user_model.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 import 'package:whisper/ui/widgets/search_tile.dart';
 import 'package:whisper/controllers/user_search_controller.dart';
 
@@ -59,16 +60,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
         iconTheme: IconThemeData(color: CustomColors.white, size: 25.sp),
         toolbarHeight: kToolbarHeight,
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: SafeArea(
           child: Container(
             padding: EdgeInsets.fromLTRB(10.0.w, 25.0.h, 10.0.w, 25.0.h),

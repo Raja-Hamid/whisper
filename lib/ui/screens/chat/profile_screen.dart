@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:whisper/constants/colors.dart';
 import 'package:whisper/controllers/auth_controller.dart';
+import 'package:whisper/ui/widgets/background_gradient.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,16 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         iconTheme: IconThemeData(color: CustomColors.white, size: 25.sp),
         toolbarHeight: kToolbarHeight,
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: CustomColors.bgGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: BackgroundGradient(
         child: SafeArea(
           child: Container(
             padding: EdgeInsets.fromLTRB(10.0.w, 25.0.h, 10.0.w, 25.0.h),
